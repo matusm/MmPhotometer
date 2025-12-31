@@ -6,14 +6,15 @@ namespace MmPhotometer
     public class SpectralRegionPod
     {
         private double _maxIntegrationTime;
-        private IOpticalSpectrum[] _darkCorrectedSampleSpectra;
-        private IOpticalSpectrum _darkCorrectedReferenceSpectrum;
+        private IOpticalSpectrum[] _rawSampleSpectra;
+        private IOpticalSpectrum _rawReferenceSpectrum;
+        private IOpticalSpectrum _rawDarkSpectrum;
 
         public double IntegrationTime { get; private set; }
         public FilterPosition FilterPosition { get; }
         public int FilterPositionAsInt => (int)FilterPosition;
         public int NumberOfAverages { get; set; } = 2;
-        public int NumberOfSamples => _darkCorrectedSampleSpectra.Length;
+        public int NumberOfSamples => _rawSampleSpectra.Length;
         public double CutoffLow { get; }
         public double CutoffHigh { get; }
         public double Bandwidth { get; }
@@ -25,7 +26,7 @@ namespace MmPhotometer
             CutoffLow = cutoffLow;
             CutoffHigh = cutoffHigh;
             Bandwidth = bw;
-            _darkCorrectedSampleSpectra = new IOpticalSpectrum[numberOfSamples];
+            _rawSampleSpectra = new IOpticalSpectrum[numberOfSamples];
         }
 
         public void SetIntegrationTime(double integrationTime)
@@ -33,15 +34,31 @@ namespace MmPhotometer
             IntegrationTime = Math.Min(integrationTime, _maxIntegrationTime);
         }
 
-        public void SetDarkCorrectedReferenceSpectrum(IOpticalSpectrum spectrum)
+        public void SetRawReferenceSpectrum(IOpticalSpectrum spectrum)
         {
-            _darkCorrectedReferenceSpectrum = spectrum;
+            _rawReferenceSpectrum = spectrum;
+        }
+        
+        public void SetRawSampleSpectrum(int sampleNumber, IOpticalSpectrum spectrum)
+        {
+            _rawSampleSpectra[sampleNumber] = spectrum;
         }
 
-        public void SetDarkCorrectedSampleSpectrum(int sampleNumber, IOpticalSpectrum spectrum)
+        public void SetDarkSpectrum(IOpticalSpectrum spectrum)
         {
-            _darkCorrectedSampleSpectra[sampleNumber] = spectrum;
+            _rawDarkSpectrum = spectrum;
         }
+
+
+        //public void SetDarkCorrectedReferenceSpectrum(IOpticalSpectrum spectrum)
+        //{
+        //    _rawReferenceSpectrum = spectrum;
+        //}
+
+        //public void SetDarkCorrectedSampleSpectrum(int sampleNumber, IOpticalSpectrum spectrum)
+        //{
+        //    _rawSampleSpectra[sampleNumber] = spectrum;
+        //}
 
         public IOpticalSpectrum GetMaskedTransmissionSpectrum(int sampleNumber)
         {
@@ -50,8 +67,8 @@ namespace MmPhotometer
 
         private IOpticalSpectrum EvaluateMaskedTransmissionSpectrum(int sampleNumber)
         {
-            var transmissionSpectrum = (SpecMath.Ratio(_darkCorrectedSampleSpectra[sampleNumber], _darkCorrectedReferenceSpectrum)).Scale(100.0);
-            var maskedTransmissionSpectrum = transmissionSpectrum.ApplyBandpassMask(CutoffLow, CutoffHigh, Bandwidth, Bandwidth);
+            var transmissionSpectrum = (SpecMath.ComputeBiasCorrectedRatio(_rawSampleSpectra[sampleNumber], _rawReferenceSpectrum, _rawDarkSpectrum)).Scale(100.0);
+            var maskedTransmissionSpectrum = transmissionSpectrum.ApplyBandpassMask(CutoffLow, CutoffHigh, Bandwidth, Bandwidth, TransitionType.Cubic);
             return maskedTransmissionSpectrum;
         }
     }

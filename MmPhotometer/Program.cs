@@ -58,7 +58,7 @@ namespace MmPhotometer
                     break;
                 case 3: // Ocean USB2000
                     spectro = new OceanOpticsUsb2000();
-                    shutter = new FilterWheelShutter(filterWheel, (int)FilterPosition.Closed);
+                    shutter = new ManualShutter();
                     break;
                 default:
                     break;
@@ -85,7 +85,7 @@ namespace MmPhotometer
                 spectralRegionPods[i].NumberOfAverages = options.NumberOfAverages;
             }
 
-            #region Get optimal integration times for each spectral region and take reference spectra
+            #region Get optimal integration times for each spectral region and take reference and dark spectra
             UIHelper.WriteMessageAndWait(
                 "=================================================================\n" +
                 "Switch on lamp and remove any samples from photometer.\n" +
@@ -94,7 +94,12 @@ namespace MmPhotometer
 
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
-                ObtainReferenceSpectrum(spectralRegionPods[i]);
+                ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods[i]);
+            }
+
+            for (int i = 0; i < spectralRegionPods.Length; i++)
+            {
+                ObtainDarkSpectrum(spectralRegionPods[i]);
             }
             #endregion
 

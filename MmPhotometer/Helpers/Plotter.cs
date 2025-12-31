@@ -7,8 +7,8 @@ namespace MmPhotometer
 {
     public partial class Program
     {
-        private static readonly int _chartWidth = 1000;
-        private static readonly int _chartHeight = 600;
+        private static readonly int _chartWidth = 1500;
+        private static readonly int _chartHeight = 900;
 
         public void ShowTransmissionChart(IOpticalSpectrum spectra, double startWl, double stopWl, double startTr = 0, double stopTr = 100) =>
             ShowTransmissionChart(new IOpticalSpectrum[] { spectra }, startWl, stopWl, startTr, stopTr);
