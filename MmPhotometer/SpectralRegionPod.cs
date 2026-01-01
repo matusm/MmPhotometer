@@ -10,6 +10,8 @@ namespace MmPhotometer
         private IOpticalSpectrum _rawReferenceSpectrum;
         private IOpticalSpectrum _rawDarkSpectrum;
 
+        public bool IsConfigured => _rawReferenceSpectrum != null && _rawDarkSpectrum != null;
+        public bool ShouldMeasure { get; set; } = true;
         public double IntegrationTime { get; private set; }
         public FilterPosition FilterPosition { get; }
         public int FilterPositionAsInt => (int)FilterPosition;
@@ -48,17 +50,6 @@ namespace MmPhotometer
         {
             _rawDarkSpectrum = spectrum;
         }
-
-
-        //public void SetDarkCorrectedReferenceSpectrum(IOpticalSpectrum spectrum)
-        //{
-        //    _rawReferenceSpectrum = spectrum;
-        //}
-
-        //public void SetDarkCorrectedSampleSpectrum(int sampleNumber, IOpticalSpectrum spectrum)
-        //{
-        //    _rawSampleSpectra[sampleNumber] = spectrum;
-        //}
 
         public IOpticalSpectrum GetMaskedTransmissionSpectrum(int sampleNumber)
         {
