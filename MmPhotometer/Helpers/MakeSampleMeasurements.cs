@@ -12,12 +12,12 @@ namespace MmPhotometer
             SetDebug();
             eventLogger.LogEvent("Determining optimal exposure time ...");
             filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
+            shutter.Open();
             double intTime = spectro.GetOptimalExposureTime(debug);
             spectralRegionPod.SetIntegrationTime(intTime);
             eventLogger.LogEvent($"Optimal integration time for filter {spectralRegionPod.FilterPosition}: {intTime} s.");
             //var refSpectrum = PerformABBAMeasurement(spectralRegionPod.FilterPositionAsInt, spectralRegionPod.IntegrationTime, spectralRegionPod.NumberOfAverages);
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
-            shutter.Open();
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "reference spectrum");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
             refSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"1_RawSpecRef{spectralRegionPod.FilterPosition}.csv");

@@ -10,8 +10,8 @@ namespace MmPhotometer
         private IOpticalSpectrum _rawReferenceSpectrum;
         private IOpticalSpectrum _rawDarkSpectrum;
 
-        public bool IsConfigured => _rawReferenceSpectrum != null && _rawDarkSpectrum != null;
-        public bool ShouldMeasure { get; set; } = true;
+        public bool IsConfigured => _rawReferenceSpectrum != null && _rawDarkSpectrum != null && ShouldMeasure;
+        public bool ShouldMeasure { get; set; } = false;
         public double IntegrationTime { get; private set; }
         public FilterPosition FilterPosition { get; }
         public int FilterPositionAsInt => (int)FilterPosition;

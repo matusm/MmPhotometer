@@ -16,7 +16,7 @@ namespace MmPhotometer
         [Option('s', "samples", Default = 3, Required = false, HelpText = "Number of samples to calibrate.")]
         public int SampleNumber { get; set; }
 
-        [Option('n', "number", Default = 5, Required = false, HelpText = "Number of spectra to average.")]
+        [Option('a', "average", Default = 5, Required = false, HelpText = "Number of spectra to average.")]
         public int NumberOfAverages { get; set; }
 
         [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Max integration time in seconds.")]
@@ -39,6 +39,9 @@ namespace MmPhotometer
         // 1: Thorlabs CCT
         // 2: Thorlabs CCS
         // 3: USB2000
+
+        [Option("basic", Default = false, Required = false, HelpText = "Measure in basic mode only.")]
+        public bool BasicOnly { get; set; }
 
         [Value(0, MetaName = "InputPath", Required = false, HelpText = "Standard lamp calibration filename")]
         public string InputPath { get; set; }

@@ -8,6 +8,7 @@ using Bev.Instruments.Thorlabs.Ctt;
 using Bev.Instruments.Thorlabs.FW;
 using MmPhotometer.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MmPhotometer
@@ -66,20 +67,57 @@ namespace MmPhotometer
 
             int numSamples = options.SampleNumber;
 
-            // setup spectral region pods as an array
+            #region Setup spectral region pods as an array
+
+            double fromWl = options.LowerBound;
+            double toWl = options.UpperBound;
+            double step = options.StepSize;
             spectralRegionPods = new SpectralRegionPod[]
             {
-                new SpectralRegionPod(numSamples, FilterPosition.FilterA, options.MaxIntTime, 180, 464, 10),
+                new SpectralRegionPod(numSamples, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
                 new SpectralRegionPod(numSamples, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
                 new SpectralRegionPod(numSamples, FilterPosition.FilterC, options.MaxIntTime, 545, 658, 10),
                 new SpectralRegionPod(numSamples, FilterPosition.FilterD, options.MaxIntTime, 658, 2000, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.Blank, options.MaxIntTime, 180, 2000, 10)
+                new SpectralRegionPod(numSamples, FilterPosition.Blank, options.MaxIntTime, 100, 2000, 0)
             };
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 spectralRegionPods[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
                 spectralRegionPods[i].NumberOfAverages = options.NumberOfAverages;
             }
+
+            // logic to minimize measurements if not all spectral regions are needed
+            for (int i = 0; i < spectralRegionPods.Length; i++) 
+            {
+                var pod = spectralRegionPods[i];
+                pod.ShouldMeasure = true;
+                if (fromWl > pod.CutoffHigh + pod.Bandwidth)
+                {
+                    pod.ShouldMeasure = false;
+                }
+                if(toWl < pod.CutoffLow - pod.Bandwidth)
+                {
+                    pod.ShouldMeasure = false;
+                }
+            }
+            if(options.BasicOnly)
+            {
+                spectralRegionPods[0].ShouldMeasure = false;
+                spectralRegionPods[1].ShouldMeasure = false;
+                spectralRegionPods[2].ShouldMeasure = false;
+                spectralRegionPods[3].ShouldMeasure = false;
+                spectralRegionPods[4].ShouldMeasure = true;
+            }
+            for (int i = 0; i < spectralRegionPods.Length; i++)
+            {
+                var pod = spectralRegionPods[i];
+                eventLogger.LogEvent($"Spectral region pod {i + 1}: Filter position {pod.FilterPosition} " +
+                    $"({pod.CutoffLow} nm to {pod.CutoffHigh} nm), " +
+                    $"Should measure: {pod.ShouldMeasure}, " +
+                    $"Number of averages: {pod.NumberOfAverages}, " +
+                    $"Initial integration time: {pod.IntegrationTime} s");
+            }
+            #endregion
 
             #region Get optimal integration times for each spectral region and take reference and dark spectra
             UIHelper.WriteMessageAndWait(
@@ -90,57 +128,70 @@ namespace MmPhotometer
 
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
-                ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods[i]);
+                if(spectralRegionPods[i].ShouldMeasure)
+                    ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods[i]);
             }
 
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
-                ObtainDarkSpectrum(spectralRegionPods[i]);
+                if (spectralRegionPods[i].ShouldMeasure)
+                    ObtainDarkSpectrum(spectralRegionPods[i]);
             }
             #endregion
 
             #region Measure samples
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
-                UIHelper.WriteMessageAndWait($"\n=============================================\n" +
+                UIHelper.WriteMessageAndWait(
+                    $"\n=============================================\n" +
                     $"Insert sample {sampleIndex + 1} and press any key to continue.\n" +
                     $"=============================================\n");
                 for (int i = 0; i < spectralRegionPods.Length; i++)
                 {
-                    ObtainSampleSpectrum(sampleIndex, spectralRegionPods[i]);
+                    if (spectralRegionPods[i].ShouldMeasure)
+                        ObtainSampleSpectrum(sampleIndex, spectralRegionPods[i]);
                 }
             }
             #endregion
 
-            double fromWl = options.LowerBound;
-            double toWl = options.UpperBound;
-            double step = options.StepSize;
-
-            OpticalSpectrum[] transmissionsDouble = new OpticalSpectrum[numSamples];
-            OpticalSpectrum[] transmissionsSimple = new OpticalSpectrum[numSamples];
+            List<OpticalSpectrum> straylightCorrectedTransmissions = new List<OpticalSpectrum>();
+            List<OpticalSpectrum> basicTransmissions = new List<OpticalSpectrum>();
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
-            { 
+            {
+                // first process the unfiltered measurement
+                if(spectralRegionPods[4].ShouldMeasure)
+                {
+                    IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
+                    spec0.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_basic_raw.csv");
+                    OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
+                    spec1.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_basic_resampled.csv");
+                    basicTransmissions.Add(spec1);
+                }
                 // combine masked ratios from each spectral region pod
-                var maskedRatioA = spectralRegionPods[0].GetMaskedTransmissionSpectrum(sampleIndex);
-                var maskedRatioB = spectralRegionPods[1].GetMaskedTransmissionSpectrum(sampleIndex);
-                var maskedRatioC = spectralRegionPods[2].GetMaskedTransmissionSpectrum(sampleIndex);
-                var maskedRatioD = spectralRegionPods[3].GetMaskedTransmissionSpectrum(sampleIndex);
-                var combinedRatio = SpecMath.Add(maskedRatioA, maskedRatioB, maskedRatioC, maskedRatioD);
-                combinedRatio.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"3_combinedRatio_sample{sampleIndex+1}.csv");
-                var finalSpectrum = combinedRatio.ResampleSpectrum(fromWl, toWl, step);
-                finalSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"4_SampleTransmission_sample{sampleIndex + 1}.csv");
-                transmissionsDouble[sampleIndex] = finalSpectrum;
-                var finalSpectrumSimple = spectralRegionPods[4].GetMaskedTransmissionSpectrum(0).ResampleSpectrum(fromWl, toWl, step);
-                finalSpectrumSimple.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"4_SampleTransmissionSimple_sample{sampleIndex + 1}.csv");
-                transmissionsSimple[sampleIndex] = finalSpectrumSimple;
+                List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
+                for (int i = 0; i < 4; i++)
+                {
+                    if (spectralRegionPods[i].ShouldMeasure)
+                    {
+                        regionSpectra.Add(spectralRegionPods[i].GetMaskedTransmissionSpectrum(sampleIndex));
+                    }
+                }
+                if (regionSpectra.Count != 0)
+                {
+                    var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
+                    combinedRegionSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_slc_raw.csv");
+                    var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
+                    resampledRegionSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_slc_resampled.csv");
+                    straylightCorrectedTransmissions.Add(resampledRegionSpectrum);
+                }
             }
 
             Console.WriteLine();
             eventLogger.Close();
 
             //Plot the spectra
-            OpticalSpectrum[] transmissions = transmissionsDouble.Concat(transmissionsSimple).ToArray();
+            OpticalSpectrum[] transmissions = straylightCorrectedTransmissions.Concat(basicTransmissions).ToArray();            
             Console.WriteLine("number of spectra: " + transmissions.Length);
             Program program = new Program();
             program.ShowTransmissionChart(transmissions, fromWl, toWl, -10, 110);
