@@ -34,7 +34,7 @@ namespace MmPhotometer
         [Option("logfile", Default = @"MmPhotometerLog.txt", Required = false, HelpText = "File name for logging.")]
         public string LogFileName { get; set; }
 
-        [Option("spectrometer", Default = 3, Required = false, HelpText = "Spectrometer type (see doc for usage).")]
+        [Option("spectrometer", Default = 1, Required = false, HelpText = "Spectrometer type (see doc for usage).")]
         public int SpecType { get; set; }
         // 1: Thorlabs CCT
         // 2: Thorlabs CCS

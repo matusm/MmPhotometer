@@ -62,5 +62,14 @@ namespace MmPhotometer
             var maskedTransmissionSpectrum = transmissionSpectrum.ApplyBandpassMask(CutoffLow, CutoffHigh, Bandwidth, Bandwidth, TransitionType.Cubic);
             return maskedTransmissionSpectrum;
         }
+
+        public override string ToString()
+        {
+            return $"{FilterPosition} " +
+                    $"({CutoffLow} nm to {CutoffHigh} nm), " +
+                    $"Measure?: {ShouldMeasure}, " +
+                    $"Integration time: {IntegrationTime} s";
+        }
+
     }
 }

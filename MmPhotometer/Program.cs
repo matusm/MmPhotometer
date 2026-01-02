@@ -32,15 +32,14 @@ namespace MmPhotometer
         private static IShutter shutter;
         private static IFilterWheel filterWheel;
         private static EventLogger eventLogger;
-        private static bool debug = false;
         #endregion
 
         private static void Run(Options options)
         {
             // instantiate instruments and logger
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            filterWheel = new NullFilterWheel();
-            //filterWheel = new ManualFilterWheel();
+            //filterWheel = new NullFilterWheel();
+            filterWheel = new ManualFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -51,7 +50,6 @@ namespace MmPhotometer
                 case 2: // CCS
                     spectro = new ThorlabsCcs(ProductID.CCS100, "M00928408");
                     shutter = new FilterWheelShutter(filterWheel, (int)FilterPosition.Closed);
-                    shutter = new ManualShutter();
                     break;
                 case 3: // Ocean USB2000
                     spectro = new OceanOpticsUsb2000();
@@ -111,11 +109,7 @@ namespace MmPhotometer
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 var pod = spectralRegionPods[i];
-                eventLogger.LogEvent($"Spectral region pod {i + 1}: Filter position {pod.FilterPosition} " +
-                    $"({pod.CutoffLow} nm to {pod.CutoffHigh} nm), " +
-                    $"Should measure: {pod.ShouldMeasure}, " +
-                    $"Number of averages: {pod.NumberOfAverages}, " +
-                    $"Initial integration time: {pod.IntegrationTime} s");
+                eventLogger.LogEvent($"Spectral region pod {i + 1}: {pod}");
             }
             #endregion
 
@@ -125,13 +119,14 @@ namespace MmPhotometer
                 "Switch on lamp and remove any samples from photometer.\n" +
                 "After warmup press any key to continue.\n" +
                 "=================================================================\n");
-
+            
+            eventLogger.LogEvent("Determining optimal exposure time ...");
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 if(spectralRegionPods[i].ShouldMeasure)
                     ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods[i]);
             }
-
+            eventLogger.LogEvent($"Measuring dark spectra ...");
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 if (spectralRegionPods[i].ShouldMeasure)
