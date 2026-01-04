@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\Plotter.cs" />
+    <Compile Include="Helpers\SampleInfo.cs" />
     <Compile Include="SpectralRegionPod.cs" />
     <Compile Include="EventLogger.cs" />
     <Compile Include="Helpers\ConsoleProgessBar.cs" />

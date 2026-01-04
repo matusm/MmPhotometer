@@ -46,6 +46,11 @@ namespace MmPhotometer
             eventLogger.Write(UIHelper.FormatSpectrometerInfo(spectro));
             eventLogger.WriteLine(UIHelper.FormatShutterInfo(shutter));
             eventLogger.Write(UIHelper.FormatFilterWheelInfo(filterWheel));
+            eventLogger.WriteLine("===== Sample Information =====");
+            for (int i = 0; i < sampleInfo.SampleNames.Length; i++)
+            {
+                eventLogger.WriteLine($"Sample {i + 1}: {sampleInfo.SampleNames[i]}");
+            }
             eventLogger.WriteLine("==============================");
         }
 

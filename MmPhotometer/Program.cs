@@ -33,6 +33,7 @@ namespace MmPhotometer
         private static IShutter shutter;
         private static IFilterWheel filterWheel;
         private static EventLogger eventLogger;
+        private static SampleInfo sampleInfo;
         #endregion
 
         private static void Run(Options options)
@@ -60,11 +61,14 @@ namespace MmPhotometer
                     break;
             }
 
+            // sample names from input file
+            sampleInfo = new SampleInfo(options.InputPath);
+
             eventLogger.LogEvent($"Program: {GetAppNameAndVersion()}");
             eventLogger.LogEvent($"User comment: {options.UserComment}");
             LogSetupInfo();
 
-            int numSamples = options.SampleNumber;
+            int numSamples = sampleInfo.NumberOfSamples;
 
             #region Setup spectral region pods as an array
 
@@ -139,9 +143,9 @@ namespace MmPhotometer
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
                 UIHelper.WriteMessageAndWait(
-                    $"\n=============================================\n" +
-                    $"Insert sample {sampleIndex + 1} and press any key to continue.\n" +
-                    $"=============================================\n");
+                    $"\n===========================================================================\n" +
+                    $"Insert sample #{sampleIndex + 1} ({sampleInfo.GetSampleName(sampleIndex)}) and press any key to continue.\n" +
+                    $"===========================================================================\n");
                 for (int i = 0; i < spectralRegionPods.Length; i++)
                 {
                     if (spectralRegionPods[i].ShouldMeasure)

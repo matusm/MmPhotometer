@@ -13,9 +13,6 @@ namespace MmPhotometer
         [Option("step", Default = 1, Required = false, HelpText = "Step size for wavelength range, in nm")]
         public double StepSize { get; set; }
 
-        [Option('s', "samples", Default = 3, Required = false, HelpText = "Number of samples to calibrate.")]
-        public int SampleNumber { get; set; }
-
         [Option('a', "average", Default = 100, Required = false, HelpText = "Number of spectra to average.")]
         public int NumberOfAverages { get; set; }
 
@@ -43,7 +40,7 @@ namespace MmPhotometer
         [Option("basic", Default = false, Required = false, HelpText = "Measure in basic mode only.")]
         public bool BasicOnly { get; set; }
 
-        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Some input file")]
+        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names.")]
         public string InputPath { get; set; }
 
         [Value(1, MetaName = "OutputPath", Required = false, HelpText = "Some output file")]
