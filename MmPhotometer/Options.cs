@@ -16,7 +16,7 @@ namespace MmPhotometer
         [Option('s', "samples", Default = 3, Required = false, HelpText = "Number of samples to calibrate.")]
         public int SampleNumber { get; set; }
 
-        [Option('a', "average", Default = 5, Required = false, HelpText = "Number of spectra to average.")]
+        [Option('a', "average", Default = 100, Required = false, HelpText = "Number of spectra to average.")]
         public int NumberOfAverages { get; set; }
 
         [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Max integration time in seconds.")]
@@ -43,10 +43,10 @@ namespace MmPhotometer
         [Option("basic", Default = false, Required = false, HelpText = "Measure in basic mode only.")]
         public bool BasicOnly { get; set; }
 
-        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Standard lamp calibration filename")]
+        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Some input file")]
         public string InputPath { get; set; }
 
-        [Value(1, MetaName = "OutputPath", Required = false, HelpText = "Result filename including path")]
+        [Value(1, MetaName = "OutputPath", Required = false, HelpText = "Some output file")]
         public string OutputPath { get; set; }
 
     }

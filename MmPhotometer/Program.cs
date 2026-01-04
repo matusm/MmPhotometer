@@ -9,6 +9,7 @@ using Bev.Instruments.Thorlabs.FW;
 using MmPhotometer.Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace MmPhotometer
@@ -38,8 +39,8 @@ namespace MmPhotometer
         {
             // instantiate instruments and logger
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            //filterWheel = new NullFilterWheel();
-            filterWheel = new ManualFilterWheel();
+            filterWheel = new NullFilterWheel();
+            //filterWheel = new ManualFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -188,9 +189,12 @@ namespace MmPhotometer
             //Plot the spectra
             OpticalSpectrum[] transmissions = straylightCorrectedTransmissions.Concat(basicTransmissions).ToArray();            
             Console.WriteLine("number of spectra: " + transmissions.Length);
-            Program program = new Program();
-            program.ShowTransmissionChart(transmissions, fromWl, toWl, -10, 110);
+            Plotter plotter = new Plotter(transmissions, fromWl, toWl, -10, 110);
+            string filePath = Path.Combine(eventLogger.LogDirectory, "TransmissionChart.png");
+            plotter.SaveTransmissionChart("Sample Transmission", filePath);
+            plotter.ShowTransmissionChart("Sample Transmission");
 
+            Console.WriteLine("done.");
         }
 
     }
