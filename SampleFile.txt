@@ -1,0 +1,9 @@
+# All lines starting with '#' are considered as comments and are thus ignored
+# Empty lines are ignored, too
+#
+# Actual lines are split in two parts at the first semicolon ';'
+# The first part is the name, this should be adequate as part of a filename.
+# The second part is a, possible lengthy, description.
+
+RG 2 ; Zeiss Rotglas, rund, d = 1,6 mm
+MM43 Didym ; Didymium Filter in Kuevetten-Rahmen
