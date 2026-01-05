@@ -20,8 +20,8 @@ namespace MmPhotometer
         FilterB = 2,
         FilterC = 3,
         FilterD = 4,
-        Blank = 5,
-        Closed = 6
+        OpenPort = 5,
+        BlockedPort = 6
     }
 
     public partial class Program
@@ -52,7 +52,7 @@ namespace MmPhotometer
                     break;
                 case 2: // CCS
                     spectro = new ThorlabsCcs(ProductID.CCS100, "M00928408");
-                    shutter = new FilterWheelShutter(filterWheel, (int)FilterPosition.Closed);
+                    shutter = new ManualShutter();
                     break;
                 case 3: // Ocean USB2000
                     spectro = new OceanOpticsUsb2000();
@@ -83,7 +83,7 @@ namespace MmPhotometer
                 new SpectralRegionPod(numSamples, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
                 new SpectralRegionPod(numSamples, FilterPosition.FilterC, options.MaxIntTime, 545, 658, 10),
                 new SpectralRegionPod(numSamples, FilterPosition.FilterD, options.MaxIntTime, 658, 2000, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.Blank, options.MaxIntTime, 100, 2000, 0)
+                new SpectralRegionPod(numSamples, FilterPosition.OpenPort, options.MaxIntTime, 100, 2000, 0)
             };
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
