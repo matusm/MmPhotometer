@@ -37,8 +37,8 @@ namespace MmPhotometer
         // 2: Thorlabs CCS
         // 3: USB2000
 
-        [Option("basic", Default = false, Required = false, HelpText = "Measure in basic mode only.")]
-        public bool BasicOnly { get; set; }
+        [Option("singlePass", Default = false, Required = false, HelpText = "Measure in basic mode only (no filters).")]
+        public bool SinglePass { get; set; }
 
         [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names.")]
         public string InputPath { get; set; }

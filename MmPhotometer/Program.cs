@@ -34,14 +34,15 @@ namespace MmPhotometer
         private static IFilterWheel filterWheel;
         private static EventLogger eventLogger;
         private static SampleInfo sampleInfo;
+        private static string rawDataFolderName;
+        private static string dataFolderName;
         #endregion
 
         private static void Run(Options options)
         {
             // instantiate instruments and logger
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            filterWheel = new NullFilterWheel();
-            //filterWheel = new ManualFilterWheel();
+            filterWheel = new ManualFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -60,10 +61,11 @@ namespace MmPhotometer
                 default:
                     break;
             }
-
             // sample names from input file
             sampleInfo = new SampleInfo(options.InputPath);
-
+            dataFolderName = eventLogger.LogDirectory;
+            rawDataFolderName = Path.Combine(dataFolderName, "RawSpectra");
+            Directory.CreateDirectory(rawDataFolderName);
             eventLogger.LogEvent($"Program: {GetAppNameAndVersion()}");
             eventLogger.LogEvent($"User comment: {options.UserComment}");
             LogSetupInfo();
@@ -103,7 +105,7 @@ namespace MmPhotometer
                     pod.ShouldMeasure = false;
                 }
             }
-            if(options.BasicOnly)
+            if(options.SinglePass)
             {
                 spectralRegionPods[0].ShouldMeasure = false;
                 spectralRegionPods[1].ShouldMeasure = false;
@@ -163,9 +165,9 @@ namespace MmPhotometer
                 if(spectralRegionPods[4].ShouldMeasure)
                 {
                     IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
-                    spec0.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_basic_raw.csv");
+                    spec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_SinglePass_raw.csv");
                     OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
-                    spec1.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_basic_resampled.csv");
+                    spec1.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_SinglePass.csv");
                     basicTransmissions.Add(spec1);
                 }
                 // combine masked ratios from each spectral region pod
@@ -180,9 +182,9 @@ namespace MmPhotometer
                 if (regionSpectra.Count != 0)
                 {
                     var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
-                    combinedRegionSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_slc_raw.csv");
+                    combinedRegionSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_MultiPass_raw.csv");
                     var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
-                    resampledRegionSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"Sample{sampleIndex + 1}_slc_resampled.csv");
+                    resampledRegionSpectrum.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}.csv");
                     straylightCorrectedTransmissions.Add(resampledRegionSpectrum);
                 }
             }
@@ -194,13 +196,11 @@ namespace MmPhotometer
             OpticalSpectrum[] transmissions = straylightCorrectedTransmissions.Concat(basicTransmissions).ToArray();            
             Console.WriteLine("number of spectra: " + transmissions.Length);
             Plotter plotter = new Plotter(transmissions, fromWl, toWl, -10, 110);
-            string filePath = Path.Combine(eventLogger.LogDirectory, "TransmissionChart.png");
+            string filePath = Path.Combine(dataFolderName, "TransmissionChart.png");
             plotter.SaveTransmissionChart("Sample Transmission", filePath);
             plotter.ShowTransmissionChart("Sample Transmission");
 
             Console.WriteLine("done.");
         }
-
     }
-
 }

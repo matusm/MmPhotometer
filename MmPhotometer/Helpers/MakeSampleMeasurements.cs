@@ -16,7 +16,7 @@ namespace MmPhotometer
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "reference spectrum");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
-            refSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"1_RawSpecRef{spectralRegionPod.FilterPosition}.csv");
+            refSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv");
         }
 
         internal static void ObtainDarkSpectrum(SpectralRegionPod spectralRegionPod)
@@ -25,7 +25,7 @@ namespace MmPhotometer
             shutter.Close();
             var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum {spectralRegionPod.FilterPosition}");
             spectralRegionPod.SetDarkSpectrum(darkSpectrum);
-            darkSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"0_RawSpecDark{spectralRegionPod.FilterPosition}.csv");
+            darkSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv");
         }
 
         internal static void ObtainSampleSpectrum(int sampleNumber, SpectralRegionPod spectralRegionPod)
@@ -36,8 +36,7 @@ namespace MmPhotometer
             shutter.Open();
             var sampleSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "sample spectrum");
             spectralRegionPod.SetRawSampleSpectrum(sampleNumber, sampleSpectrum);
-            sampleSpectrum.SaveSpectrumAsCsv(eventLogger.LogDirectory, $"2_RawSpecSample{spectralRegionPod.FilterPosition}.csv");
+            sampleSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"2_RawSample{spectralRegionPod.FilterPosition}.csv");
         }
-
     }
 }
