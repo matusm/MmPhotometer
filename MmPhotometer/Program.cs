@@ -42,7 +42,8 @@ namespace MmPhotometer
         {
             // instantiate instruments and logger
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            filterWheel = new ManualFilterWheel();
+            filterWheel = new NullFilterWheel();
+            //filterWheel = new ManualFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -167,7 +168,7 @@ namespace MmPhotometer
                     IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
                     spec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_SinglePass_raw.csv");
                     OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
-                    spec1.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_SinglePass.csv");
+                    spec1.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_SinglePass.csv");
                     basicTransmissions.Add(spec1);
                 }
                 // combine masked ratios from each spectral region pod
@@ -184,7 +185,7 @@ namespace MmPhotometer
                     var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
                     combinedRegionSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_MultiPass_raw.csv");
                     var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
-                    resampledRegionSpectrum.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}.csv");
+                    resampledRegionSpectrum.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_MultiPass.csv");
                     straylightCorrectedTransmissions.Add(resampledRegionSpectrum);
                 }
             }

@@ -10,6 +10,7 @@ namespace MmPhotometer
         private readonly SampleName[] _samples;
 
         public int NumberOfSamples => _samples.Length;
+        public SampleName[] Samples => _samples;
         public string[] SampleNames => _samples.Select(sample => sample.Name).ToArray();
         public string[] SampleDescriptions => _samples.Select(sample => sample.Description).ToArray();
 
@@ -94,5 +95,7 @@ namespace MmPhotometer
 
             Description = description;
         }
+
+        public override string ToString() => $"{Name}; {Description}";
     }
 }

@@ -13,7 +13,7 @@ namespace MmPhotometer
         [Option("step", Default = 1, Required = false, HelpText = "Step size for wavelength range, in nm")]
         public double StepSize { get; set; }
 
-        [Option('a', "average", Default = 100, Required = false, HelpText = "Number of spectra to average.")]
+        [Option('a', "average", Default = 10, Required = false, HelpText = "Number of spectra to average.")]
         public int NumberOfAverages { get; set; }
 
         [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Max integration time in seconds.")]
