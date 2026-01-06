@@ -8,23 +8,12 @@ namespace MmPhotometer
     internal class SampleInfo
     {
         private readonly SampleName[] _samples;
-
         public int NumberOfSamples => _samples.Length;
         public SampleName[] Samples => _samples;
-        public string[] SampleNames => _samples.Select(sample => sample.Name).ToArray();
-        public string[] SampleDescriptions => _samples.Select(sample => sample.Description).ToArray();
 
         public SampleInfo(string filePath)
         {
-            if (!string.IsNullOrEmpty(filePath))
-            {
-                _samples = ParseSampleNames(LoadLinesFromFile(filePath));
-            }
-            else
-            {
-                _samples = new SampleName[1];
-                _samples[0] = new SampleName("DefaultSample", "No description available.");
-            }
+            _samples = ParseSampleNames(LoadLinesFromFile(filePath));
         }
 
         public string GetSampleName(int index)
@@ -33,16 +22,16 @@ namespace MmPhotometer
             {
                 throw new ArgumentOutOfRangeException(nameof(index), "Index for sample names is out of range.");
             }
-            return SampleNames[index];
+            return _samples[index].Name;
         }
 
         public string GetSampleDescription(int index)
         {
             if (index < 0 || index >= _samples.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), "Index for sample names is out of range.");
+                throw new ArgumentOutOfRangeException(nameof(index), "Index for sample descriptions is out of range.");
             }
-            return SampleDescriptions[index];
+            return _samples[index].Description;
         }
 
         private string[] LoadLinesFromFile(string filePath)
@@ -56,10 +45,6 @@ namespace MmPhotometer
 
         private SampleName[] ParseSampleNames(string[] textLines)
         {
-            if (textLines == null || textLines.Length == 0)
-            {
-                throw new ArgumentException("Sample names cannot be null or empty.");
-            }
             List<SampleName> samples = new List<SampleName>();
             foreach (var line in textLines)
             {
@@ -70,10 +55,18 @@ namespace MmPhotometer
                 }
                 var parts = line.Split(new[] { ';' }, 2);
                 var left = parts[0].Trim();
+                if(string.IsNullOrEmpty(left))
+                {
+                    continue; // skip empty sample names
+                }
                 var right = parts.Length > 1 ? parts[1].Trim() : string.Empty;
                 samples.Add(new SampleName(left, right));
             }
-            return samples.ToArray();
+            if (samples.Count > 0)
+            {
+                return samples.ToArray();
+            }
+            return Array.Empty<SampleName>();
         }
     }
 
@@ -81,18 +74,16 @@ namespace MmPhotometer
     {
         public string Name { get; }
         public string Description { get; }
-        
+
         public SampleName(string name, string description)
         {
             // Substitute blanks or tabs in name with underscore
             var normalizedName = name?.Replace(' ', '_').Replace('\t', '_');
             Name = normalizedName;
-
             if (string.IsNullOrEmpty(description))
             {
-                description = "No description available.";
+                description = "No description given.";
             }
-
             Description = description;
         }
 

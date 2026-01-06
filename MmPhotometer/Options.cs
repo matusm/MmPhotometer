@@ -10,19 +10,19 @@ namespace MmPhotometer
         [Option("high", Default = 1000, Required = false, HelpText = "Upper bound of spectral region, in nm")]
         public double UpperBound { get; set; }
 
-        [Option("step", Default = 1, Required = false, HelpText = "Step size for wavelength range, in nm")]
+        [Option("step", Default = 1, Required = false, HelpText = "Wavelength step size, in nm")]
         public double StepSize { get; set; }
 
         [Option('a', "average", Default = 10, Required = false, HelpText = "Number of spectra to average.")]
         public int NumberOfAverages { get; set; }
 
-        [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Max integration time in seconds.")]
+        [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Upper bound for integration time, in seconds.")]
         public double MaxIntTime { get; set; }
 
         [Option("comment", Default = "---", Required = false, HelpText = "User supplied comment text.")]
         public string UserComment { get; set; }
 
-        [Option("fwport", Default = "COM3", Required = false, HelpText = "Filter wheel serial port.")] // photometry lab, COM1 for development computer
+        [Option("fwport", Default = "COM3", Required = false, HelpText = "Serial port for motorized filter wheel.")] // photometry lab, COM1 for development computer
         public string FwPort { get; set; }
 
         [Option("basepath", Default = @"C:\temp\MmPhotometer", Required = false, HelpText = "Base path for result directories.")]
@@ -40,7 +40,7 @@ namespace MmPhotometer
         [Option("singlePass", Default = false, Required = false, HelpText = "Measure in basic mode only (no filters).")]
         public bool SinglePass { get; set; }
 
-        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names.")]
+        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names to be processed.")]
         public string InputPath { get; set; }
 
         [Value(1, MetaName = "OutputPath", Required = false, HelpText = "Some output file")]
