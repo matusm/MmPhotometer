@@ -19,6 +19,9 @@ namespace MmPhotometer
         [Option('m', "maxinttime", Default = 1, Required = false, HelpText = "Upper bound for integration time, in seconds.")]
         public double MaxIntTime { get; set; }
 
+        [Option("control", Default = false, Required = false, HelpText = "Perform control measurements.")]
+        public bool ControlMeasurements { get; set; }
+
         [Option("comment", Default = "---", Required = false, HelpText = "User supplied comment text.")]
         public string UserComment { get; set; }
 

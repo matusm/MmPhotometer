@@ -15,14 +15,17 @@ namespace MmPhotometer
         private readonly double _stopWl;
         private readonly double _startTr;
         private readonly double _stopTr;
+        private readonly double _wlInterval = 50;
+        private readonly double _trInterval;
 
-        public Plotter(IOpticalSpectrum[] spectra, double startWl, double stopWl, double startTr = 0, double stopTr = 100)
+        public Plotter(IOpticalSpectrum[] spectra, double startWl, double stopWl, double startTr = 0, double stopTr = 100, double trInterval=10)
         {
             _spectra = spectra;
             _startWl = startWl;
             _stopWl = stopWl;
             _startTr = startTr;
             _stopTr = stopTr;
+            _trInterval = trInterval;
         }
 
         private Form CreateTransmissionChartForm(string titleText)
@@ -65,17 +68,17 @@ namespace MmPhotometer
             chartArea.Axes[0].TitleFont = new Font("Arial", 12, FontStyle.Regular);
             chartArea.Axes[0].Minimum = _startWl;
             chartArea.Axes[0].Maximum = _stopWl;
-            chartArea.Axes[0].Interval = 50;
-            chartArea.Axes[0].MajorGrid.Interval = 50;
-            chartArea.Axes[0].MajorTickMark.Interval = 50;
+            chartArea.Axes[0].Interval = _wlInterval;
+            chartArea.Axes[0].MajorGrid.Interval = _wlInterval;
+            chartArea.Axes[0].MajorTickMark.Interval = _wlInterval;
             // y-Axis settings
             chartArea.Axes[1].Title = "Transmission / %";
             chartArea.Axes[1].TitleFont = new Font("Arial", 12, FontStyle.Regular);
             chartArea.Axes[1].Minimum = _startTr;
             chartArea.Axes[1].Maximum = _stopTr;
-            chartArea.Axes[1].Interval = 10;
-            chartArea.Axes[1].MajorGrid.Interval = 10;
-            chartArea.Axes[1].MajorTickMark.Interval = 10;
+            chartArea.Axes[1].Interval = _trInterval;
+            chartArea.Axes[1].MajorGrid.Interval = _trInterval;
+            chartArea.Axes[1].MajorTickMark.Interval = _trInterval;
             return form;
         }
 

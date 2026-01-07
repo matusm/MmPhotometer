@@ -71,20 +71,20 @@ namespace MmPhotometer
             eventLogger.LogEvent($"User comment: {options.UserComment}");
             LogSetupInfo();
 
-            int numSamples = sampleInfo.NumberOfSamples;
-
             #region Setup spectral region pods as an array
-
+            
+            int numSamples = sampleInfo.NumberOfSamples;
+            int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
             double fromWl = options.LowerBound;
             double toWl = options.UpperBound;
             double step = options.StepSize;
             spectralRegionPods = new SpectralRegionPod[]
             {
-                new SpectralRegionPod(numSamples, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.FilterC, options.MaxIntTime, 545, 658, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.FilterD, options.MaxIntTime, 658, 2000, 10),
-                new SpectralRegionPod(numSamples, FilterPosition.OpenPort, options.MaxIntTime, 100, 2000, 0)
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterC, options.MaxIntTime, 545, 658, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterD, options.MaxIntTime, 658, 2000, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.OpenPort, options.MaxIntTime, 100, 2000, 0)
             };
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
@@ -93,7 +93,7 @@ namespace MmPhotometer
             }
 
             // logic to minimize measurements if not all spectral regions are needed
-            for (int i = 0; i < spectralRegionPods.Length; i++) 
+            for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 var pod = spectralRegionPods[i];
                 pod.ShouldMeasure = true;
@@ -101,12 +101,12 @@ namespace MmPhotometer
                 {
                     pod.ShouldMeasure = false;
                 }
-                if(toWl < pod.CutoffLow - pod.Bandwidth)
+                if (toWl < pod.CutoffLow - pod.Bandwidth)
                 {
                     pod.ShouldMeasure = false;
                 }
             }
-            if(options.SinglePass)
+            if (options.SinglePass)
             {
                 spectralRegionPods[0].ShouldMeasure = false;
                 spectralRegionPods[1].ShouldMeasure = false;
@@ -127,11 +127,11 @@ namespace MmPhotometer
                 "Switch on lamp and remove any samples from photometer.\n" +
                 "After warmup press any key to continue.\n" +
                 "=================================================================\n");
-            
+
             eventLogger.LogEvent("Determining optimal exposure time ...");
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
-                if(spectralRegionPods[i].ShouldMeasure)
+                if (spectralRegionPods[i].ShouldMeasure)
                     ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods[i]);
             }
             eventLogger.LogEvent($"Measuring dark spectra ...");
@@ -147,7 +147,8 @@ namespace MmPhotometer
             {
                 UIHelper.WriteMessageAndWait(
                     $"\n===========================================================================\n" +
-                    $"Insert sample #{sampleIndex + 1} ({sampleInfo.GetSampleName(sampleIndex)}) and press any key to continue.\n" +
+                    $"Insert sample #{sampleIndex + 1} ({sampleInfo.GetSampleName(sampleIndex)}).\n" +
+                    $"Afterwards press any key to continue with measurements.\n" +
                     $"===========================================================================\n");
                 for (int i = 0; i < spectralRegionPods.Length; i++)
                 {
@@ -157,19 +158,47 @@ namespace MmPhotometer
             }
             #endregion
 
-            List<OpticalSpectrum> straylightCorrectedTransmissions = new List<OpticalSpectrum>();
-            List<OpticalSpectrum> basicTransmissions = new List<OpticalSpectrum>();
+            #region Make control measurements with blocked and open port
+            if (options.ControlMeasurements)
+            {
+                UIHelper.WriteMessageAndWait(
+                    "\n===========================================================================\n" +
+                    "Block beam path of photometer. (0 %)\n" +
+                    "Afterwards press any key to continue with control measurements.\n" +
+                    "===========================================================================\n");
+                for (int i = 0; i < spectralRegionPods.Length; i++)
+                {
+                    if (spectralRegionPods[i].ShouldMeasure)
+                        ObtainSampleSpectrum(numSamples, spectralRegionPods[i]);
+                }
+
+                UIHelper.WriteMessageAndWait(
+                    "\n===========================================================================\n" +
+                    "Remove any samples from photometer. (100 %)\n" +
+                    "Afterwards press any key to continue with control measurements.\n" +
+                    "===========================================================================\n");
+                for (int i = 0; i < spectralRegionPods.Length; i++)
+                {
+                    if (spectralRegionPods[i].ShouldMeasure)
+                        ObtainSampleSpectrum(numSamples + 1, spectralRegionPods[i]);
+                }
+            }
+            #endregion
+
+
+            List<OpticalSpectrum> multiPassTransmissions = new List<OpticalSpectrum>();
+            List<OpticalSpectrum> singlePassTransmissions = new List<OpticalSpectrum>();
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
                 // first process the unfiltered measurement
-                if(spectralRegionPods[4].ShouldMeasure)
+                if (spectralRegionPods[4].ShouldMeasure)
                 {
                     IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
                     spec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_SinglePass_raw.csv");
                     OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
                     spec1.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_SinglePass.csv");
-                    basicTransmissions.Add(spec1);
+                    singlePassTransmissions.Add(spec1);
                 }
                 // combine masked ratios from each spectral region pod
                 List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
@@ -186,7 +215,33 @@ namespace MmPhotometer
                     combinedRegionSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_MultiPass_raw.csv");
                     var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
                     resampledRegionSpectrum.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_MultiPass.csv");
-                    straylightCorrectedTransmissions.Add(resampledRegionSpectrum);
+                    multiPassTransmissions.Add(resampledRegionSpectrum);
+                }
+            }
+
+            if (options.ControlMeasurements)
+            {
+                // process control measurements
+                int blockedIndex = numSamples;
+                int openIndex = numSamples + 1;
+                // single pass
+                if (spectralRegionPods[4].ShouldMeasure)
+                {
+                    IOpticalSpectrum blockedSpec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(blockedIndex);
+                    blockedSpec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_SampleBlocked_SinglePass_raw.csv");
+                    var blockedSpec1 = blockedSpec0.ResampleSpectrum(fromWl, toWl, step);
+                    blockedSpec1.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_SinglePass.csv");
+                    Plotter plotterBlocked = new Plotter(new IOpticalSpectrum[] { blockedSpec1 }, fromWl, toWl, -5, 5, 1);
+                    plotterBlocked.SaveTransmissionChart("Control Measurement - Blocked Port", Path.Combine(dataFolderName, "ControlBlockedChart.png"));
+                }
+                if (spectralRegionPods[4].ShouldMeasure)
+                {
+                    IOpticalSpectrum openSpec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(openIndex);
+                    openSpec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_SampleOpen_SinglePass_raw.csv");
+                    var openSpec1 = openSpec0.ResampleSpectrum(fromWl, toWl, step);
+                    openSpec1.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_SinglePass.csv");
+                    Plotter plotterOpen = new Plotter(new IOpticalSpectrum[] { openSpec1 }, fromWl, toWl, 95, 105, 1);
+                    plotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlOpenChart.png"));
                 }
             }
 
@@ -194,10 +249,10 @@ namespace MmPhotometer
             eventLogger.Close();
 
             //Plot the spectra
-            OpticalSpectrum[] transmissions = straylightCorrectedTransmissions.Concat(basicTransmissions).ToArray();            
+            OpticalSpectrum[] transmissions = multiPassTransmissions.Concat(singlePassTransmissions).ToArray();
             Console.WriteLine("number of spectra: " + transmissions.Length);
             Plotter plotter = new Plotter(transmissions, fromWl, toWl, -10, 110);
-            string filePath = Path.Combine(dataFolderName, "TransmissionChart.png");
+            string filePath = Path.Combine(dataFolderName, "SampleTransmissionChart.png");
             plotter.SaveTransmissionChart("Sample Transmission", filePath);
             plotter.ShowTransmissionChart("Sample Transmission");
 
