@@ -6,6 +6,7 @@ using Bev.Instruments.OpticalShutterLib.Domain;
 using Bev.Instruments.Thorlabs.Ccs;
 using Bev.Instruments.Thorlabs.Ctt;
 using Bev.Instruments.Thorlabs.FW;
+using MmPhotometer;
 using MmPhotometer.Helpers;
 using System;
 using System.Collections.Generic;
@@ -36,14 +37,16 @@ namespace MmPhotometer
         private static SampleInfo sampleInfo;
         private static string rawDataFolderName;
         private static string dataFolderName;
+        private static double fromWl;
+        private static double toWl;
+        private static double step;
         #endregion
 
         private static void Run(Options options)
         {
-            // instantiate instruments and logger
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            filterWheel = new NullFilterWheel();
-            //filterWheel = new ManualFilterWheel();
+            //filterWheel = new NullFilterWheel();
+            filterWheel = new ManualFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -72,12 +75,12 @@ namespace MmPhotometer
             LogSetupInfo();
 
             #region Setup spectral region pods as an array
-            
+
             int numSamples = sampleInfo.NumberOfSamples;
             int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
-            double fromWl = options.LowerBound;
-            double toWl = options.UpperBound;
-            double step = options.StepSize;
+            fromWl = options.LowerBound;
+            toWl = options.UpperBound;
+            step = options.StepSize;
             spectralRegionPods = new SpectralRegionPod[]
             {
                 new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
@@ -186,77 +189,114 @@ namespace MmPhotometer
             #endregion
 
 
-            List<OpticalSpectrum> multiPassTransmissions = new List<OpticalSpectrum>();
-            List<OpticalSpectrum> singlePassTransmissions = new List<OpticalSpectrum>();
+            List<OpticalSpectrum> sampleTransmissions = new List<OpticalSpectrum>();
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
-                // first process the unfiltered measurement
-                if (spectralRegionPods[4].ShouldMeasure)
+                var singlePassSpec = GetSinglepassTransmission(sampleIndex);
+                if(singlePassSpec != null)
                 {
-                    IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
-                    spec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_SinglePass_raw.csv");
-                    OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
-                    spec1.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_SinglePass.csv");
-                    singlePassTransmissions.Add(spec1);
+                    sampleTransmissions.Add(singlePassSpec);
+                    singlePassSpec.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_SinglePass.csv");
                 }
-                // combine masked ratios from each spectral region pod
-                List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
-                for (int i = 0; i < 4; i++)
+                var multiPassSpec = GetMultipassTransmission(sampleIndex);
+                if (multiPassSpec != null)
                 {
-                    if (spectralRegionPods[i].ShouldMeasure)
-                    {
-                        regionSpectra.Add(spectralRegionPods[i].GetMaskedTransmissionSpectrum(sampleIndex));
-                    }
-                }
-                if (regionSpectra.Count != 0)
-                {
-                    var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
-                    combinedRegionSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"3_Sample{sampleIndex + 1}_MultiPass_raw.csv");
-                    var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
-                    resampledRegionSpectrum.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_MultiPass.csv");
-                    multiPassTransmissions.Add(resampledRegionSpectrum);
+                    sampleTransmissions.Add(multiPassSpec);
+                    multiPassSpec.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_MultiPass.csv");
                 }
             }
 
             if (options.ControlMeasurements)
             {
                 // process control measurements
+                List<OpticalSpectrum> controlTransmissions = new List<OpticalSpectrum>();
                 int blockedIndex = numSamples;
                 int openIndex = numSamples + 1;
-                // single pass
-                if (spectralRegionPods[4].ShouldMeasure)
+
+                var singlePassBlocked = GetSinglepassTransmission(blockedIndex);
+                if (singlePassBlocked != null)
                 {
-                    IOpticalSpectrum blockedSpec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(blockedIndex);
-                    blockedSpec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_SampleBlocked_SinglePass_raw.csv");
-                    var blockedSpec1 = blockedSpec0.ResampleSpectrum(fromWl, toWl, step);
-                    blockedSpec1.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_SinglePass.csv");
-                    Plotter plotterBlocked = new Plotter(new IOpticalSpectrum[] { blockedSpec1 }, fromWl, toWl, -5, 5, 1);
-                    plotterBlocked.SaveTransmissionChart("Control Measurement - Blocked Port", Path.Combine(dataFolderName, "ControlBlockedChart.png"));
+                    controlTransmissions.Add(singlePassBlocked);
+                    singlePassBlocked.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_SinglePass.csv");
                 }
-                if (spectralRegionPods[4].ShouldMeasure)
+                var multiPassBlocked = GetMultipassTransmission(blockedIndex);
+                if (multiPassBlocked != null)
                 {
-                    IOpticalSpectrum openSpec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(openIndex);
-                    openSpec0.SaveSpectrumAsCsv(rawDataFolderName, $"3_SampleOpen_SinglePass_raw.csv");
-                    var openSpec1 = openSpec0.ResampleSpectrum(fromWl, toWl, step);
-                    openSpec1.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_SinglePass.csv");
-                    Plotter plotterOpen = new Plotter(new IOpticalSpectrum[] { openSpec1 }, fromWl, toWl, 95, 105, 1);
-                    plotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlOpenChart.png"));
+                    controlTransmissions.Add(multiPassBlocked);
+                    multiPassBlocked.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_MultiPass.csv");
                 }
+
+                var singlePassOpen = GetSinglepassTransmission(openIndex);
+                if (singlePassOpen != null)
+                {
+                    controlTransmissions.Add(singlePassOpen);
+                    singlePassOpen.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_SinglePass.csv");
+                }
+                var multiPassOpen = GetMultipassTransmission(openIndex);
+                if (multiPassOpen != null)
+                {
+                    controlTransmissions.Add(multiPassOpen);
+                    multiPassOpen.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_MultiPass.csv");
+                }
+
+                Plotter controlPlotterBlocked = new Plotter(controlTransmissions.ToArray(), fromWl, toWl, -2.0, 2.0, 0.5);
+                controlPlotterBlocked.SaveTransmissionChart("Control Measurement - Blocked Port", Path.Combine(dataFolderName, "ControlBlockedChart.png"));
+                Plotter controlPlotterOpen = new Plotter(controlTransmissions.ToArray(), fromWl, toWl, 98.0, 102.0, 0.5);
+                controlPlotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlOpenChart.png"));
             }
 
             Console.WriteLine();
             eventLogger.Close();
 
             //Plot the spectra
-            OpticalSpectrum[] transmissions = multiPassTransmissions.Concat(singlePassTransmissions).ToArray();
-            Console.WriteLine("number of spectra: " + transmissions.Length);
-            Plotter plotter = new Plotter(transmissions, fromWl, toWl, -10, 110);
+            Console.WriteLine("number of spectra: " + sampleTransmissions.Count);
+            Plotter plotter = new Plotter(sampleTransmissions.ToArray(), fromWl, toWl, 0, 105);
             string filePath = Path.Combine(dataFolderName, "SampleTransmissionChart.png");
             plotter.SaveTransmissionChart("Sample Transmission", filePath);
             plotter.ShowTransmissionChart("Sample Transmission");
 
             Console.WriteLine("done.");
         }
+
+        //================================================================
+
+        public static OpticalSpectrum GetMultipassTransmission(int sampleIndex)
+        {
+            List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
+            for (int i = 0; i < 4; i++)
+            {
+                if (spectralRegionPods[i].ShouldMeasure)
+                {
+                    regionSpectra.Add(spectralRegionPods[i].GetMaskedTransmissionSpectrum(sampleIndex));
+                }
+            }
+            if (regionSpectra.Count != 0)
+            {
+                var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
+                var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(fromWl, toWl, step);
+                return resampledRegionSpectrum;
+            }
+            return null;
+        }
+
+        //================================================================
+
+        public static OpticalSpectrum GetSinglepassTransmission(int sampleIndex)
+        {
+            if (spectralRegionPods[4].ShouldMeasure)
+            {
+                IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
+                OpticalSpectrum spec1 = spec0.ResampleSpectrum(fromWl, toWl, step);
+                return spec1;
+            }
+            return null;
+        }
+
+        //================================================================
+
+
+
+
     }
 }
