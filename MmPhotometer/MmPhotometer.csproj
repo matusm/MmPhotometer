@@ -86,8 +86,8 @@
     <Compile Include="EventLogger.cs" />
     <Compile Include="Helpers\ConsoleProgessBar.cs" />
     <Compile Include="Helpers\Extensions.cs" />
-    <Compile Include="Helpers\MakeFullMeasurement.cs" />
-    <Compile Include="Helpers\MakeSampleMeasurements.cs" />
+    <Compile Include="Helpers\AverageSpectrum.cs" />
+    <Compile Include="Helpers\ObtainAndSaveSpectra.cs" />
     <Compile Include="Helpers\SpectralReader.cs" />
     <Compile Include="Helpers\UIHelper.cs" />
     <Compile Include="Options.cs" />
