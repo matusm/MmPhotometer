@@ -7,6 +7,7 @@ namespace MmPhotometer
     {
         internal static void ObtainOptimalExposureTimeAndReferenceSpectrum(SpectralRegionPod spectralRegionPod)
         {
+            if (spectralRegionPod.ShouldMeasure == false) return;
             bool debug = false;
             filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
             shutter.Open();
@@ -21,6 +22,7 @@ namespace MmPhotometer
 
         internal static void ObtainDarkSpectrum(SpectralRegionPod spectralRegionPod)
         {
+            if (spectralRegionPod.ShouldMeasure == false) return;
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             shutter.Close();
             var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum {spectralRegionPod.FilterPosition}");
@@ -30,6 +32,7 @@ namespace MmPhotometer
 
         internal static void ObtainSampleSpectrum(int sampleNumber, SpectralRegionPod spectralRegionPod)
         {
+            if (spectralRegionPod.ShouldMeasure == false) return;
             eventLogger.LogEvent($"Measuring sample spectrum for filter {spectralRegionPod.FilterPosition} ...");
             filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
