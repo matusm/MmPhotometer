@@ -6,12 +6,10 @@ using Bev.Instruments.OpticalShutterLib.Domain;
 using Bev.Instruments.Thorlabs.Ccs;
 using Bev.Instruments.Thorlabs.Ctt;
 using Bev.Instruments.Thorlabs.FW;
-using MmPhotometer;
 using MmPhotometer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace MmPhotometer
 {
