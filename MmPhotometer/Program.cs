@@ -13,6 +13,7 @@ using System.IO;
 
 namespace MmPhotometer
 {
+    // FilterWheelShutter will no longer work. (no blocked port)
     public enum FilterPosition
     {
         FilterA = 1,
@@ -29,7 +30,7 @@ namespace MmPhotometer
         // The following datafields are defined here for access from static methods
         private static SpectralRegionPod[] spectralRegionPods;
         private static IArraySpectrometer spectro;
-        private static IShutter shutter;
+        private static IShutter shutter; // FilterWheelShutter will no longer work. (no blocked port)
         private static IFilterWheel filterWheel;
         private static EventLogger eventLogger;
         private static SampleInfo sampleInfo;
@@ -67,6 +68,7 @@ namespace MmPhotometer
             _lowerWavelength = options.LowerBound;
             _upperWavelength = options.UpperBound;
             _wavelengthStep = options.StepSize;
+            ClampWavelengthRange();
 
             // sample names from input file
             sampleInfo = new SampleInfo(options.InputPath);
@@ -257,6 +259,19 @@ namespace MmPhotometer
             plotter.ShowTransmissionChart("Sample Transmission");
 
             Console.WriteLine("done.");
+        }
+
+        //========================================================================================================
+        private static void ClampWavelengthRange()
+        {
+            if(_lowerWavelength<spectro.MinimumWavelength)
+            {
+                _lowerWavelength = (int)spectro.MinimumWavelength + 1;
+            }
+            if(_upperWavelength>spectro.MaximumWavelength)
+            {
+                _upperWavelength = (int)spectro.MaximumWavelength - 1;
+            }
         }
 
         //========================================================================================================
