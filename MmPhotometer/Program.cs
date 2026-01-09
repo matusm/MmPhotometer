@@ -19,8 +19,8 @@ namespace MmPhotometer
         FilterB = 2,
         FilterC = 3,
         FilterD = 4,
-        OpenPort = 5,
-        BlockedPort = 6
+        FilterE = 5,
+        OpenPort = 6
     }
 
     public partial class Program
@@ -87,7 +87,8 @@ namespace MmPhotometer
                 new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
                 new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
                 new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterC, options.MaxIntTime, 545, 685, 10),
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterD, options.MaxIntTime, 685, 2000, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterD, options.MaxIntTime, 685, 875, 10),
+                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterE, options.MaxIntTime, 875, 2000, 10),
                 // the single pass pod covers the full spectral range and must be the last one of the array!
                 new SpectralRegionPod(numSamplesWithControls, FilterPosition.OpenPort, options.MaxIntTime, 100, 2000, 0)
             };
@@ -117,9 +118,10 @@ namespace MmPhotometer
                 spectralRegionPods[1].ShouldMeasure = false;
                 spectralRegionPods[2].ShouldMeasure = false;
                 spectralRegionPods[3].ShouldMeasure = false;
+                spectralRegionPods[4].ShouldMeasure = false;
                 // only the single pass pod must be measured
                 // the single pass pod covers the full spectral range and must be the last one of the array!
-                spectralRegionPods[4].ShouldMeasure = true;
+                spectralRegionPods[5].ShouldMeasure = true;
             }
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
@@ -262,7 +264,7 @@ namespace MmPhotometer
         public static OpticalSpectrum GetMultipassTransmission(int sampleIndex)
         {
             List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 5; i++)
             {
                 if (spectralRegionPods[i].ShouldMeasure)
                 {
@@ -282,9 +284,9 @@ namespace MmPhotometer
 
         public static OpticalSpectrum GetSinglepassTransmission(int sampleIndex)
         {
-            if (spectralRegionPods[4].ShouldMeasure)
+            if (spectralRegionPods[5].ShouldMeasure)
             {
-                IOpticalSpectrum spec0 = spectralRegionPods[4].GetMaskedTransmissionSpectrum(sampleIndex);
+                IOpticalSpectrum spec0 = spectralRegionPods[5].GetMaskedTransmissionSpectrum(sampleIndex);
                 OpticalSpectrum spec1 = spec0.ResampleSpectrum(_lowerWavelength, _upperWavelength, _wavelengthStep);
                 return spec1;
             }
