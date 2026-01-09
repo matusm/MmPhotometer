@@ -64,14 +64,14 @@ namespace MmPhotometer
                     break;
             }
 
-            int numSamples = sampleInfo.NumberOfSamples;
-            int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
             _lowerWavelength = options.LowerBound;
             _upperWavelength = options.UpperBound;
             _wavelengthStep = options.StepSize;
 
             // sample names from input file
             sampleInfo = new SampleInfo(options.InputPath);
+            int numSamples = sampleInfo.NumberOfSamples;
+            int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
             dataFolderName = eventLogger.LogDirectory;
             rawDataFolderName = Path.Combine(dataFolderName, "RawSpectra");
             Directory.CreateDirectory(rawDataFolderName);
