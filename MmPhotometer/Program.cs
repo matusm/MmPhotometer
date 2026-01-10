@@ -13,17 +13,6 @@ using System.IO;
 
 namespace MmPhotometer
 {
-    // FilterWheelShutter will no longer work. (no blocked port)
-    public enum FilterPosition
-    {
-        FilterA = 1,
-        FilterB = 2,
-        FilterC = 3,
-        FilterD = 4,
-        FilterE = 5,
-        OpenPort = 6
-    }
-
     public partial class Program
     {
         #region Global datafields
@@ -39,6 +28,7 @@ namespace MmPhotometer
         private static double _lowerWavelength;
         private static double _upperWavelength;
         private static double _wavelengthStep;
+        private static MeasurementMode _measurementMode;
         #endregion
 
         private static void Run(Options options)
@@ -74,6 +64,7 @@ namespace MmPhotometer
             sampleInfo = new SampleInfo(options.InputPath);
             int numSamples = sampleInfo.NumberOfSamples;
             int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
+            
             dataFolderName = eventLogger.LogDirectory;
             rawDataFolderName = Path.Combine(dataFolderName, "RawSpectra");
             Directory.CreateDirectory(rawDataFolderName);
@@ -82,25 +73,17 @@ namespace MmPhotometer
             LogSetupInfo();
 
             #region Setup spectral region pods as an array
+            
+            _measurementMode = (MeasurementMode)options.Mode; // cast int to enum
+            spectralRegionPods = SetupPods(_measurementMode, numSamplesWithControls, options.MaxIntTime);
 
-            spectralRegionPods = new SpectralRegionPod[]
-            {
-                // the pods must be ordered by ascending wavelength ranges!
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterA, options.MaxIntTime, 100, 464, 10),
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterB, options.MaxIntTime, 464, 545, 10),
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterC, options.MaxIntTime, 545, 685, 10),
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterD, options.MaxIntTime, 685, 875, 10),
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.FilterE, options.MaxIntTime, 875, 2000, 10),
-                // the single pass pod covers the full spectral range and must be the last one of the array!
-                new SpectralRegionPod(numSamplesWithControls, FilterPosition.OpenPort, options.MaxIntTime, 100, 2000, 0)
-            };
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 spectralRegionPods[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
                 spectralRegionPods[i].NumberOfAverages = options.NumberOfAverages;
             }
 
-            // logic to minimize measurements if not all spectral regions are needed
+            // logic to minimize measurements if spectral regions are outside desired wavelength range
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 var pod = spectralRegionPods[i];
@@ -114,17 +97,7 @@ namespace MmPhotometer
                     pod.ShouldMeasure = false;
                 }
             }
-            if (options.SinglePass)
-            {
-                spectralRegionPods[0].ShouldMeasure = false;
-                spectralRegionPods[1].ShouldMeasure = false;
-                spectralRegionPods[2].ShouldMeasure = false;
-                spectralRegionPods[3].ShouldMeasure = false;
-                spectralRegionPods[4].ShouldMeasure = false;
-                // only the single pass pod must be measured
-                // the single pass pod covers the full spectral range and must be the last one of the array!
-                spectralRegionPods[5].ShouldMeasure = true;
-            }
+
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 eventLogger.LogEvent($"Spectral region pod {i + 1}: {spectralRegionPods[i]}");
@@ -195,17 +168,11 @@ namespace MmPhotometer
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
-                var singlePassSpec = GetSinglepassTransmission(sampleIndex);
-                if(singlePassSpec != null)
-                {
-                    sampleTransmissions.Add(singlePassSpec);
-                    singlePassSpec.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_SinglePass.csv");
-                }
-                var multiPassSpec = GetMultipassTransmission(sampleIndex);
+                var multiPassSpec = CombineSpectralRegionTransmissions(sampleIndex);
                 if (multiPassSpec != null)
                 {
                     sampleTransmissions.Add(multiPassSpec);
-                    multiPassSpec.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}_MultiPass.csv");
+                    multiPassSpec.SaveSpectrumAsCsv(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv");
                 }
             }
 
@@ -216,30 +183,18 @@ namespace MmPhotometer
                 int blockedIndex = numSamples;
                 int openIndex = numSamples + 1;
 
-                var singlePassBlocked = GetSinglepassTransmission(blockedIndex);
-                if (singlePassBlocked != null)
-                {
-                    controlTransmissions.Add(singlePassBlocked);
-                    singlePassBlocked.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_SinglePass.csv");
-                }
-                var multiPassBlocked = GetMultipassTransmission(blockedIndex);
+                var multiPassBlocked = CombineSpectralRegionTransmissions(blockedIndex);
                 if (multiPassBlocked != null)
                 {
                     controlTransmissions.Add(multiPassBlocked);
-                    multiPassBlocked.SaveSpectrumAsCsv(dataFolderName, $"SampleBlocked_MultiPass.csv");
+                    multiPassBlocked.SaveSpectrumAsCsv(dataFolderName, $"Control_SampleBlocked.csv");
                 }
 
-                var singlePassOpen = GetSinglepassTransmission(openIndex);
-                if (singlePassOpen != null)
-                {
-                    controlTransmissions.Add(singlePassOpen);
-                    singlePassOpen.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_SinglePass.csv");
-                }
-                var multiPassOpen = GetMultipassTransmission(openIndex);
+                var multiPassOpen = CombineSpectralRegionTransmissions(openIndex);
                 if (multiPassOpen != null)
                 {
                     controlTransmissions.Add(multiPassOpen);
-                    multiPassOpen.SaveSpectrumAsCsv(dataFolderName, $"SampleOpen_MultiPass.csv");
+                    multiPassOpen.SaveSpectrumAsCsv(dataFolderName, $"Control_SampleOpen.csv");
                 }
 
                 Plotter controlPlotterBlocked = new Plotter(controlTransmissions.ToArray(), _lowerWavelength, _upperWavelength, -2.0, 2.0, 0.5);
@@ -262,13 +217,14 @@ namespace MmPhotometer
         }
 
         //========================================================================================================
+
         private static void ClampWavelengthRange()
         {
-            if(_lowerWavelength<spectro.MinimumWavelength)
+            if (_lowerWavelength < spectro.MinimumWavelength)
             {
                 _lowerWavelength = (int)spectro.MinimumWavelength + 1;
             }
-            if(_upperWavelength>spectro.MaximumWavelength)
+            if (_upperWavelength > spectro.MaximumWavelength)
             {
                 _upperWavelength = (int)spectro.MaximumWavelength - 1;
             }
@@ -276,7 +232,7 @@ namespace MmPhotometer
 
         //========================================================================================================
 
-        public static OpticalSpectrum GetMultipassTransmission(int sampleIndex)
+        public static OpticalSpectrum CombineSpectralRegionTransmissions(int sampleIndex)
         {
             List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
             for (int i = 0; i < 5; i++)
@@ -296,17 +252,6 @@ namespace MmPhotometer
         }
 
         //========================================================================================================
-
-        public static OpticalSpectrum GetSinglepassTransmission(int sampleIndex)
-        {
-            if (spectralRegionPods[5].ShouldMeasure)
-            {
-                IOpticalSpectrum spec0 = spectralRegionPods[5].GetMaskedTransmissionSpectrum(sampleIndex);
-                OpticalSpectrum spec1 = spec0.ResampleSpectrum(_lowerWavelength, _upperWavelength, _wavelengthStep);
-                return spec1;
-            }
-            return null;
-        }
 
         //========================================================================================================
 

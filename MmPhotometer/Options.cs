@@ -40,8 +40,13 @@ namespace MmPhotometer
         // 2: Thorlabs CCS
         // 3: USB2000
 
-        [Option("singlePass", Default = false, Required = false, HelpText = "Measure in basic mode only (no filters).")]
-        public bool SinglePass { get; set; }
+        [Option("mode", Default = 1, Required = false, HelpText = "Bandpass filter mode (see doc for usage).")]
+        public int Mode { get; set; }
+        // 1: single pass
+        // 2: two pass (violet + open)
+        // 3: three pass (violet + open + NIR)
+        // 4: four pass (violet + blue + yellow + red)
+        // 5: five pass (all filters)
 
         [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names to be processed.")]
         public string InputPath { get; set; }
