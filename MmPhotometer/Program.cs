@@ -235,7 +235,7 @@ namespace MmPhotometer
         public static OpticalSpectrum CombineSpectralRegionTransmissions(int sampleIndex)
         {
             List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < spectralRegionPods.Length; i++)
             {
                 if (spectralRegionPods[i].ShouldMeasure)
                 {

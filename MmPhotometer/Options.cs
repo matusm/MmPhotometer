@@ -48,7 +48,7 @@ namespace MmPhotometer
         // 4: four pass (violet + blue + yellow + red)
         // 5: five pass (all filters)
 
-        [Value(0, MetaName = "InputPath", Required = false, HelpText = "Text file containing sample names to be processed.")]
+        [Value(0, MetaName = "InputPath", Required = true, HelpText = "Text file containing sample names to be processed.")]
         public string InputPath { get; set; }
 
         [Value(1, MetaName = "OutputPath", Required = false, HelpText = "Some output file")]
