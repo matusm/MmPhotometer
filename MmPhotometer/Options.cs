@@ -4,6 +4,27 @@ namespace MmPhotometer
 {
     internal class Options
     {
+
+        [Option("mode", Default = 1, Required = false, HelpText = "Bandpass filter mode (see doc for usage).")]
+        public int ModeNumber { get; set; }
+        // 1: single pass
+        // 2: two pass (violet + open)
+        // 3: three pass (violet + open + NIR)
+        // 4: four pass (violet + blue + yellow + red)
+        // 5: five pass (all filters)
+
+        public MeasurementMode Mode
+        {
+            get
+            {
+                if (ModeNumber < 1 || ModeNumber > 5)
+                {
+                    return MeasurementMode.Unknown;
+                }
+                return (MeasurementMode)ModeNumber;
+            }
+        }
+
         [Option("low", Default = 400, Required = false, HelpText = "Lower bound of spectral region, in nm")]
         public double LowerBound { get; set; }
         
@@ -40,13 +61,6 @@ namespace MmPhotometer
         // 2: Thorlabs CCS
         // 3: USB2000
 
-        [Option("mode", Default = 1, Required = false, HelpText = "Bandpass filter mode (see doc for usage).")]
-        public int Mode { get; set; }
-        // 1: single pass
-        // 2: two pass (violet + open)
-        // 3: three pass (violet + open + NIR)
-        // 4: four pass (violet + blue + yellow + red)
-        // 5: five pass (all filters)
 
         [Value(0, MetaName = "InputPath", Required = true, HelpText = "Text file containing sample names to be processed.")]
         public string InputPath { get; set; }

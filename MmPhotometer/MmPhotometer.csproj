@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="At.Matus.DataSeriesPod">
+      <HintPath>..\..\DataSeriesPod\bin\Release\At.Matus.DataSeriesPod.dll</HintPath>
+    </Reference>
     <Reference Include="At.Matus.MetaData">
       <HintPath>..\..\At.Matus.MetaData\At.Matus.MetaData\bin\Release\At.Matus.MetaData.dll</HintPath>
     </Reference>
@@ -80,10 +83,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Abstractions\IInstrumentTemperature.cs" />
+    <Compile Include="Domain\CctInstrumentTemperature.cs" />
+    <Compile Include="Domain\NullInstrumentTemperature.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Helpers\Plotter.cs" />
     <Compile Include="Helpers\SampleInfo.cs" />
-    <Compile Include="PreparePods.cs" />
+    <Compile Include="SetupPods.cs" />
     <Compile Include="SpectralRegionPod.cs" />
     <Compile Include="EventLogger.cs" />
     <Compile Include="Helpers\ConsoleProgessBar.cs" />
@@ -101,5 +107,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

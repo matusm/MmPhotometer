@@ -6,6 +6,8 @@ using Bev.Instruments.OpticalShutterLib.Domain;
 using Bev.Instruments.Thorlabs.Ccs;
 using Bev.Instruments.Thorlabs.Ctt;
 using Bev.Instruments.Thorlabs.FW;
+using MmPhotometer.Abstractions;
+using MmPhotometer.Domain;
 using MmPhotometer.Helpers;
 using System;
 using System.Collections.Generic;
@@ -21,6 +23,7 @@ namespace MmPhotometer
         private static IArraySpectrometer spectro;
         private static IShutter shutter; // FilterWheelShutter will no longer work. (no blocked port)
         private static IFilterWheel filterWheel;
+        private static IInstrumentTemperature temperature;
         private static EventLogger eventLogger;
         private static SampleInfo sampleInfo;
         private static string rawDataFolderName;
@@ -28,7 +31,6 @@ namespace MmPhotometer
         private static double _lowerWavelength;
         private static double _upperWavelength;
         private static double _wavelengthStep;
-        private static MeasurementMode _measurementMode;
         #endregion
 
         private static void Run(Options options)
@@ -42,14 +44,17 @@ namespace MmPhotometer
                 case 1: // CCT
                     spectro = new ThorlabsCct();
                     shutter = new CctShutter((ThorlabsCct)spectro);
+                    temperature = new CctInstrumentTemperature((ThorlabsCct)spectro);
                     break;
                 case 2: // CCS
                     spectro = new ThorlabsCcs(ProductID.CCS100, "M00928408");
                     shutter = new ManualShutter();
+                    temperature = new NullInstrumentTemperature();
                     break;
                 case 3: // Ocean USB2000
                     spectro = new OceanOpticsUsb2000();
                     shutter = new ManualShutter();
+                    temperature = new NullInstrumentTemperature();
                     break;
                 default:
                     break;
@@ -59,6 +64,8 @@ namespace MmPhotometer
             _upperWavelength = options.UpperBound;
             _wavelengthStep = options.StepSize;
             ClampWavelengthRange();
+
+            temperature.Update(); // every now and then update temperature reading
 
             // sample names from input file
             sampleInfo = new SampleInfo(options.InputPath);
@@ -72,10 +79,10 @@ namespace MmPhotometer
             eventLogger.LogEvent($"User comment: {options.UserComment}");
             LogSetupInfo();
 
+
             #region Setup spectral region pods as an array
-            
-            _measurementMode = (MeasurementMode)options.Mode; // cast int to enum
-            spectralRegionPods = SetupPods(_measurementMode, numSamplesWithControls, options.MaxIntTime);
+
+            spectralRegionPods = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime);
 
             for (int i = 0; i < spectralRegionPods.Length; i++)
             {
@@ -105,6 +112,7 @@ namespace MmPhotometer
             #endregion
 
             #region Get optimal integration times for each spectral region and take reference and dark spectra
+            temperature.Update(); // every now and then update temperature reading
             UIHelper.WriteMessageAndWait(
                 "=================================================================\n" +
                 "Switch on lamp and remove any samples from photometer.\n" +
@@ -141,6 +149,7 @@ namespace MmPhotometer
             #region Make control measurements with blocked and open port
             if (options.ControlMeasurements)
             {
+                temperature.Update(); // every now and then update temperature reading
                 UIHelper.WriteMessageAndWait(
                     "\n===========================================================================\n" +
                     "Block beam path of photometer. (0 %)\n" +
@@ -162,7 +171,6 @@ namespace MmPhotometer
                 }
             }
             #endregion
-
 
             List<OpticalSpectrum> sampleTransmissions = new List<OpticalSpectrum>();
 
@@ -203,6 +211,17 @@ namespace MmPhotometer
                 controlPlotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlOpenChart.png"));
             }
 
+            Console.WriteLine();
+            temperature.Update(); // the very last update
+            if(temperature.HasTemperatureData())
+            {
+                eventLogger.LogEvent("Instrument temperature statistics:");
+                eventLogger.LogEvent($"First instrument temperature: {temperature.GetFirstTemperature():F2} °C.");
+                eventLogger.LogEvent($"Latest instrument temperature: {temperature.GetLatestTemperature():F2} °C.");
+                eventLogger.LogEvent($"Average instrument temperature: {temperature.GetTemperatureAverage():F2} °C.");
+            }
+
+            eventLogger.LogEvent("Measurement sequence completed.");
             Console.WriteLine();
             eventLogger.Close();
 
