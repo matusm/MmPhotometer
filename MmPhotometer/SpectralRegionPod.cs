@@ -65,10 +65,9 @@ namespace MmPhotometer
 
         public override string ToString()
         {
-            return $"{FilterPosition} " +
+            return $"{FilterPosition.ToFriendlyString()} " +
                     $"({CutoffLow} nm to {CutoffHigh} nm), " +
-                    $"Measure?: {ShouldMeasure}, " +
-                    $"Integration time: {IntegrationTime} s";
+                    $"ShouldMeasure? {ShouldMeasure}";
         }
 
     }

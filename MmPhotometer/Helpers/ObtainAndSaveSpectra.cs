@@ -14,7 +14,7 @@ namespace MmPhotometer
             shutter.Open();
             double intTime = spectro.GetOptimalExposureTime(debug);
             spectralRegionPod.SetIntegrationTime(intTime);
-            eventLogger.LogEvent($"Optimal integration time for filter {spectralRegionPod.FilterPosition}: {intTime} s.");
+            eventLogger.LogEvent($"Optimal integration time - {spectralRegionPod.FilterPosition.ToFriendlyString()}: {intTime} s.");
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "reference spectrum");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
@@ -28,7 +28,7 @@ namespace MmPhotometer
             if (spectralRegionPod.ShouldMeasure == false) return;
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             shutter.Close();
-            var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum {spectralRegionPod.FilterPosition}");
+            var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetDarkSpectrum(darkSpectrum);
             darkSpectrum.SaveSpectrumAsCsv(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv");
             temperature.Update(); // every now and then update temperature reading
@@ -38,7 +38,7 @@ namespace MmPhotometer
         {
             temperature.Update(); // every now and then update temperature reading
             if (spectralRegionPod.ShouldMeasure == false) return;
-            eventLogger.LogEvent($"Measuring sample spectrum for filter {spectralRegionPod.FilterPosition} ...");
+            eventLogger.LogEvent($"Measuring sample spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()} ...");
             filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             shutter.Open();

@@ -101,6 +101,7 @@ namespace MmPhotometer
             form.Close();
             // Save the bitmap to a file as PNG
             bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+            form.Close();
         }
 
     }

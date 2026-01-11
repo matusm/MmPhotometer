@@ -67,7 +67,7 @@ namespace MmPhotometer
 
             temperature.Update(); // every now and then update temperature reading
 
-            // sample names from input file
+            // get sample names from input file
             sampleInfo = new SampleInfo(options.InputPath);
             int numSamples = sampleInfo.NumberOfSamples;
             int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
@@ -77,8 +77,8 @@ namespace MmPhotometer
             Directory.CreateDirectory(rawDataFolderName);
             eventLogger.LogEvent($"Program: {GetAppNameAndVersion()}");
             eventLogger.LogEvent($"User comment: {options.UserComment}");
+            eventLogger.LogEvent($"Measurement mode: {options.Mode.ToFriendlyString()}");
             LogSetupInfo();
-
 
             #region Setup spectral region pods as an array
 
@@ -191,18 +191,18 @@ namespace MmPhotometer
                 int blockedIndex = numSamples;
                 int openIndex = numSamples + 1;
 
-                var multiPassBlocked = CombineSpectralRegionTransmissions(blockedIndex);
-                if (multiPassBlocked != null)
+                var controlBlocked = CombineSpectralRegionTransmissions(blockedIndex);
+                if (controlBlocked != null)
                 {
-                    controlTransmissions.Add(multiPassBlocked);
-                    multiPassBlocked.SaveSpectrumAsCsv(dataFolderName, $"Control_SampleBlocked.csv");
+                    controlTransmissions.Add(controlBlocked);
+                    controlBlocked.SaveSpectrumAsCsv(dataFolderName, $"SampleControl_Blocked.csv");
                 }
 
-                var multiPassOpen = CombineSpectralRegionTransmissions(openIndex);
-                if (multiPassOpen != null)
+                var controlOpen = CombineSpectralRegionTransmissions(openIndex);
+                if (controlOpen != null)
                 {
-                    controlTransmissions.Add(multiPassOpen);
-                    multiPassOpen.SaveSpectrumAsCsv(dataFolderName, $"Control_SampleOpen.csv");
+                    controlTransmissions.Add(controlOpen);
+                    controlOpen.SaveSpectrumAsCsv(dataFolderName, $"SampleControl_Open.csv");
                 }
 
                 Plotter controlPlotterBlocked = new Plotter(controlTransmissions.ToArray(), _lowerWavelength, _upperWavelength, -2.0, 2.0, 0.5);
@@ -212,21 +212,20 @@ namespace MmPhotometer
             }
 
             Console.WriteLine();
-            temperature.Update(); // the very last update
+            //temperature.Update(); // the very last update !!! DOES NOT RETURN !!!
             if(temperature.HasTemperatureData())
             {
-                eventLogger.LogEvent("Instrument temperature statistics:");
-                eventLogger.LogEvent($"First instrument temperature: {temperature.GetFirstTemperature():F2} °C.");
-                eventLogger.LogEvent($"Latest instrument temperature: {temperature.GetLatestTemperature():F2} °C.");
-                eventLogger.LogEvent($"Average instrument temperature: {temperature.GetTemperatureAverage():F2} °C.");
+                eventLogger.LogEvent($"Instrument temperature statistics:\n" +
+                    $"   First value: {temperature.GetFirstTemperature():F2} °C.\n" +
+                    $"   Average:     {temperature.GetTemperatureAverage():F2} °C.\n" +
+                    $"   Final value: {temperature.GetLatestTemperature():F2} °C.");
             }
 
-            eventLogger.LogEvent("Measurement sequence completed.");
             Console.WriteLine();
+            eventLogger.LogEvent("Measurement sequence completed.");
             eventLogger.Close();
 
             //Plot the sample transmission spectra
-            Console.WriteLine("number of spectra: " + sampleTransmissions.Count);
             Plotter plotter = new Plotter(sampleTransmissions.ToArray(), _lowerWavelength, _upperWavelength, 0, 100);
             string filePath = Path.Combine(dataFolderName, "SampleTransmissionChart.png");
             plotter.SaveTransmissionChart("Sample Transmission", filePath);
@@ -271,11 +270,6 @@ namespace MmPhotometer
         }
 
         //========================================================================================================
-
-        //========================================================================================================
-
-
-
 
     }
 }
