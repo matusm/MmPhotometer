@@ -9,10 +9,9 @@ namespace MmPhotometer
         {
             temperature.Update(); // every now and then update temperature reading
             if (spectralRegionPod.ShouldMeasure == false) return;
-            bool debug = false;
             filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
             shutter.Open();
-            double intTime = spectro.GetOptimalExposureTime(debug);
+            double intTime = spectro.GetOptimalExposureTime();
             spectralRegionPod.SetIntegrationTime(intTime);
             eventLogger.LogEvent($"Optimal integration time - {spectralRegionPod.FilterPosition.ToFriendlyString()}: {intTime} s.");
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
