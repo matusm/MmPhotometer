@@ -115,7 +115,7 @@ namespace MmPhotometer
             #region Get optimal integration times for each spectral region and take reference and dark spectra
             temperature.Update(); // every now and then update temperature reading
             UIHelper.WriteMessageAndWait(
-                "=================================================================\n" +
+                "\n=================================================================\n" +
                 "Switch on lamp and remove any samples from photometer.\n" +
                 "After warmup press any key to continue.\n" +
                 "=================================================================\n");
