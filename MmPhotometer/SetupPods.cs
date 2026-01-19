@@ -21,8 +21,8 @@ namespace MmPhotometer
                     break;
                 case MeasurementMode.ThreePass:
                     pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterA, maxIntTime, 100, 464, commonBandWidth));
-                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.OpenPort, maxIntTime, 464, 875, commonBandWidth));
-                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterE, maxIntTime, 875, 2000, commonBandWidth));
+                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.OpenPort, maxIntTime, 464, 890, commonBandWidth));
+                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterE, maxIntTime, 890, 2000, commonBandWidth));
                     break;
                 case MeasurementMode.FourPass:
                     pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterA, maxIntTime, 100, 464, commonBandWidth));
@@ -34,8 +34,8 @@ namespace MmPhotometer
                     pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterA, maxIntTime, 100, 464, commonBandWidth));
                     pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterB, maxIntTime, 464, 545, commonBandWidth));
                     pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterC, maxIntTime, 545, 685, commonBandWidth));
-                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterD, maxIntTime, 685, 875, commonBandWidth));
-                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterE, maxIntTime, 875, 2000, commonBandWidth));
+                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterD, maxIntTime, 685, 890, commonBandWidth));
+                    pods.Add(new SpectralRegionPod(numSamples, FilterPosition.FilterE, maxIntTime, 890, 2000, commonBandWidth));
                     break;
                 default:
                     break;
