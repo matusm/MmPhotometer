@@ -181,7 +181,7 @@ namespace MmPhotometer
                 if (multiPassSpec != null)
                 {
                     sampleTransmissions.Add(multiPassSpec);
-                    multiPassSpec.SaveAsSimpleCsvFile(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv");
+                    multiPassSpec.SaveAsSimpleCsvFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
                 }
             }
 
@@ -196,14 +196,14 @@ namespace MmPhotometer
                 if (controlBlocked != null)
                 {
                     controlTransmissions.Add(controlBlocked);
-                    controlBlocked.SaveAsSimpleCsvFile(dataFolderName, $"SampleControl_Blocked.csv");
+                    controlBlocked.SaveAsSimpleCsvFile(Path.Combine(dataFolderName, $"SampleControl_Blocked.csv"));
                 }
 
                 var controlOpen = CombineSpectralRegionTransmissions(openIndex);
                 if (controlOpen != null)
                 {
                     controlTransmissions.Add(controlOpen);
-                    controlOpen.SaveAsSimpleCsvFile(dataFolderName, $"SampleControl_Open.csv");
+                    controlOpen.SaveAsSimpleCsvFile(Path.Combine(dataFolderName, $"SampleControl_Open.csv"));
                 }
 
                 Plotter controlPlotterBlocked = new Plotter(controlTransmissions.ToArray(), _lowerWavelength, _upperWavelength, -2.0, 2.0, 0.5);

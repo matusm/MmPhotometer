@@ -1,5 +1,6 @@
 ﻿using Bev.Instruments.ArraySpectrometer.Domain;
 using MmPhotometer.Helpers;
+using System.IO;
 
 namespace MmPhotometer
 {
@@ -17,7 +18,7 @@ namespace MmPhotometer
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "reference spectrum");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
-            refSpectrum.SaveAsSimpleCsvFile(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv");
+            refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
 
@@ -29,7 +30,7 @@ namespace MmPhotometer
             shutter.Close();
             var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetDarkSpectrum(darkSpectrum);
-            darkSpectrum.SaveAsSimpleCsvFile(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv");
+            darkSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
 
@@ -43,7 +44,7 @@ namespace MmPhotometer
             shutter.Open();
             var sampleSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "sample spectrum");
             spectralRegionPod.SetRawSampleSpectrum(sampleNumber, sampleSpectrum);
-            sampleSpectrum.SaveAsSimpleCsvFile(rawDataFolderName, $"2_RawSample{spectralRegionPod.FilterPosition}.csv");
+            sampleSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"2_RawSample{spectralRegionPod.FilterPosition}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
     }

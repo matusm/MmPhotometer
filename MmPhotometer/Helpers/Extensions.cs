@@ -5,9 +5,9 @@ namespace MmPhotometer.Helpers
 {
     internal static class Extensions
     {
-        public static void SaveAsSimpleCsvFile(this IOpticalSpectrum spectrum, string directory, string fileName, bool writeHeader = true)
+        public static void SaveAsSimpleCsvFile(this IOpticalSpectrum spectrum, string filePath, bool writeHeader = true)
         {
-            StreamWriter csvFile = new StreamWriter(Path.Combine(directory, fileName));
+            StreamWriter csvFile = new StreamWriter(filePath);
             // Write CSV header
             if (writeHeader)
                 csvFile.WriteLine(spectrum.DataPoints[0].GetCsvHeader());
