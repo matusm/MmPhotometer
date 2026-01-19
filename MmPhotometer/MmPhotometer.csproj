@@ -87,6 +87,7 @@
     <Compile Include="Domain\CctInstrumentTemperature.cs" />
     <Compile Include="Domain\NullInstrumentTemperature.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="Helpers\MetaDataHelper.cs" />
     <Compile Include="Helpers\Plotter.cs" />
     <Compile Include="Helpers\SampleInfo.cs" />
     <Compile Include="SetupPods.cs" />
