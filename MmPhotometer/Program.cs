@@ -1,4 +1,5 @@
 ﻿using At.Matus.OpticalSpectrumLib;
+using At.Matus.OpticalSpectrumLib.Domain;
 using Bev.Instruments.ArraySpectrometer.Abstractions;
 using Bev.Instruments.OceanOptics.Usb2000;
 using Bev.Instruments.OpticalShutterLib.Abstractions;
@@ -8,11 +9,9 @@ using Bev.Instruments.Thorlabs.Ctt;
 using Bev.Instruments.Thorlabs.FW;
 using MmPhotometer.Abstractions;
 using MmPhotometer.Domain;
-using MmPhotometer.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 
 namespace MmPhotometer
 {

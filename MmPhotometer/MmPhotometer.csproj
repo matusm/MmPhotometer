@@ -93,7 +93,6 @@
     <Compile Include="SpectralRegionPod.cs" />
     <Compile Include="EventLogger.cs" />
     <Compile Include="Helpers\ConsoleProgessBar.cs" />
-    <Compile Include="Helpers\Extensions.cs" />
     <Compile Include="Helpers\AverageSpectrum.cs" />
     <Compile Include="Helpers\ObtainAndSaveSpectra.cs" />
     <Compile Include="Helpers\SpectralReader.cs" />
