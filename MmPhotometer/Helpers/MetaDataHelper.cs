@@ -1,31 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace MmPhotometer
 {
     public partial class Program
     {
-        internal static Dictionary<string, string> SampleMetaDataRecords(int sampleIndex)
+        internal static Dictionary<string, string> SampleMetaDataRecords(string sampleName, string sampleDescription)
         {
             Dictionary<string, string> metaData = new Dictionary<string, string>();
-            metaData.Add($"SampleName", $"{sampleInfo.GetSampleName(sampleIndex)}");
-            metaData.Add($"SampleDescription", $"{sampleInfo.GetSampleDescription(sampleIndex)}");
-            // Add mode
-            // Add comment
+            metaData.Add("SampleName", $"{sampleName}");
+            metaData.Add("SampleDescription", $"{sampleDescription}");
+            metaData.Add("MeasurementMode", $"{_options.Mode.ToFriendlyString()}");
+            metaData.Add("UserComment", $"{_options.UserComment}");
             metaData.Add("Application", $"{GetAppNameAndVersion()}");
-            metaData.Add("Date", $"{DateTime.Now:yyyy-MM-dd}");
-            metaData.Add("Time", $"{DateTime.Now:HH:mm:ss}");
+            metaData.Add("DateTime", $"{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}");
             metaData.Add("SpectrometerManufacturer", $"{spectro.InstrumentManufacturer}");
             metaData.Add("SpectrometerType", $"{spectro.InstrumentType}");
             metaData.Add("SpectrometerSerialNumber", $"{spectro.InstrumentSerialNumber}");
             metaData.Add("SpectrometerMinWavelength", $"{spectro.MinimumWavelength:F2} nm");
             metaData.Add("SpectrometerMaxWavelength", $"{spectro.MaximumWavelength:F2} nm");
             metaData.Add("SpectrometerPixelNumber", $"{spectro.Wavelengths.Length}");
-            metaData.Add("ShutterName", $"{shutter.Name}");
-            metaData.Add("FilterWheelName", $"{filterWheel.Name}");
+            metaData.Add("Shutter", $"{shutter.Name}");
+            metaData.Add("FilterWheel", $"{filterWheel.Name}");
             metaData.Add("FilterWheelPositions", $"{filterWheel.FilterCount}");
             return metaData;
         }
 
+        internal static Dictionary<string, string> SampleMetaDataRecords(int sampleIndex)
+        {
+            return SampleMetaDataRecords(sampleInfo.GetSampleName(sampleIndex), sampleInfo.GetSampleDescription(sampleIndex));
+        }
     }
 }

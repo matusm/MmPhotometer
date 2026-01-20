@@ -31,10 +31,12 @@ namespace MmPhotometer
         private static double _lowerWavelength;
         private static double _upperWavelength;
         private static double _wavelengthStep;
+        private static Options _options; // for use outside of Run()
         #endregion
 
         private static void Run(Options options)
         {
+            _options = options;
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
             //filterWheel = new NullFilterWheel();
             filterWheel = new ManualFilterWheel();
@@ -179,6 +181,7 @@ namespace MmPhotometer
                 var multiPassSpec = CombineSpectralRegionTransmissions(sampleIndex);
                 if (multiPassSpec != null)
                 {
+                    multiPassSpec.DeleteMetaDataRecords();
                     multiPassSpec.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
                     sampleTransmissions.Add(multiPassSpec);
                     multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
@@ -195,6 +198,8 @@ namespace MmPhotometer
                 var controlBlocked = CombineSpectralRegionTransmissions(blockedIndex);
                 if (controlBlocked != null)
                 {
+                    controlBlocked.DeleteMetaDataRecords();
+                    controlBlocked.AddMetaDataRecord(SampleMetaDataRecords("Blocked", "Control sample with 0 % transmission"));
                     controlTransmissions.Add(controlBlocked);
                     controlBlocked.SaveAsResultFile(Path.Combine(dataFolderName, $"SampleControl_Blocked.csv"));
                 }
@@ -202,6 +207,8 @@ namespace MmPhotometer
                 var controlOpen = CombineSpectralRegionTransmissions(openIndex);
                 if (controlOpen != null)
                 {
+                    controlOpen.DeleteMetaDataRecords();
+                    controlOpen.AddMetaDataRecord(SampleMetaDataRecords("Open", "Control sample with 100 % transmission"));
                     controlTransmissions.Add(controlOpen);
                     controlOpen.SaveAsResultFile(Path.Combine(dataFolderName, $"SampleControl_Open.csv"));
                 }
