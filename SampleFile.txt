@@ -6,5 +6,7 @@
 # The second part is a, possible lengthy, description.
 
 #MM43 Didym ; Didymium Filter in Kuevetten-Rahmen
-RG 780; Schott 40 x 14 mm, 2 mm, Schmelze 13086
+MM44 Holmium ; Phtode 8,9 mm x 34,7 mm, 2,0 mm
+#RG2 ; MM42 Carl Zeiss, Durchmesser: 32,0 mm Dicke: 2,01 mm
+#RG 780; Schott 40 x 14 mm, 2 mm, Schmelze 13086
 #GG 385; Schott 40 x 14 mm, 2 mm, Schmelze 311820

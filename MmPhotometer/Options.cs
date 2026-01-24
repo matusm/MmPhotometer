@@ -43,6 +43,9 @@ namespace MmPhotometer
         [Option("control", Default = false, Required = false, HelpText = "Perform control measurements.")]
         public bool ControlMeasurements { get; set; }
 
+        [Option("ABBA", Default = false, Required = false, HelpText = "Perform ABBA measurement sequence.")]
+        public bool Abba { get; set; }
+
         [Option("comment", Default = "---", Required = false, HelpText = "User supplied comment text.")]
         public string UserComment { get; set; }
 
