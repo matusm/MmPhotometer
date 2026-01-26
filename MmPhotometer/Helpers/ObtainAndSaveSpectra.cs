@@ -16,7 +16,7 @@ namespace MmPhotometer
             spectralRegionPod.SetIntegrationTime(intTime);
             eventLogger.LogEvent($"Optimal integration time - {spectralRegionPod.FilterPosition.ToFriendlyString()}: {intTime} s.");
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
-            var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "reference spectrum");
+            var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"reference spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
             refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv"));
             temperature.Update(); // every now and then update temperature reading
@@ -31,6 +31,18 @@ namespace MmPhotometer
             var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetDarkSpectrum(darkSpectrum);
             darkSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv"));
+            temperature.Update(); // every now and then update temperature reading
+        }
+
+        internal static void ObtainReferenceSpectrum(SpectralRegionPod spectralRegionPod)
+        {
+            temperature.Update(); // every now and then update temperature reading
+            if (spectralRegionPod.ShouldMeasure == false) return;
+            spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
+            shutter.Open();
+            var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"reference spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
+            spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
+            refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
 

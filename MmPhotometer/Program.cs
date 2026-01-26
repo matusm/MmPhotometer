@@ -217,7 +217,12 @@ namespace MmPhotometer
             }
             #endregion
 
-            #region Take refenece and dark spectra ..BA
+            #region Take reference and dark spectra ..BA
+            UIHelper.WriteMessageAndWait(
+                    "\n===========================================================================\n" +
+                    "Remove any samples from photometer.\n" +
+                    "Afterwards press any key to continue.\n" +
+                    "===========================================================================\n");
             eventLogger.LogEvent($"Measuring dark spectra ...");
             for (int i = 0; i < spectralRegionPods2.Length; i++)
             {
@@ -226,7 +231,7 @@ namespace MmPhotometer
             eventLogger.LogEvent($"Measuring reference spectra ...");
             for (int i = 0; i < spectralRegionPods2.Length; i++)
             {
-               //TODO ObtainReferenceSpectrum(spectralRegionPods2[i]);
+                ObtainReferenceSpectrum(spectralRegionPods2[i]);
             }
             #endregion
 
