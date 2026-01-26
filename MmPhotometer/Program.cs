@@ -19,8 +19,8 @@ namespace MmPhotometer
     {
         #region Global datafields
         // The following datafields are defined here for access from static methods
-        private static SpectralRegionPod[] spectralRegionPods1; // for AB.. of ABBA
-        private static SpectralRegionPod[] spectralRegionPods2; // for ..BA of ABBA
+        private static SpectralRegionPod[] spectralRegionPodsA; // for AB.. of ABBA
+        private static SpectralRegionPod[] spectralRegionPodsB; // for ..BA of ABBA
         private static IArraySpectrometer spectro;
         private static IShutter shutter; // FilterWheelShutter will no longer work. (no blocked port)
         private static IFilterWheel filterWheel;
@@ -85,23 +85,23 @@ namespace MmPhotometer
 
             #region Setup spectral region pods as an array
 
-            spectralRegionPods1 = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for AB.. of ABBA
-            spectralRegionPods2 = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for ..BA of ABBA
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            spectralRegionPodsA = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for AB.. of ABBA
+            spectralRegionPodsB = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for ..BA of ABBA
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                spectralRegionPods1[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
-                spectralRegionPods1[i].NumberOfAverages = options.NumberOfAverages;
+                spectralRegionPodsA[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
+                spectralRegionPodsA[i].NumberOfAverages = options.NumberOfAverages;
             }
-            for (int i = 0; i < spectralRegionPods2.Length; i++)
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
-                spectralRegionPods2[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
-                spectralRegionPods2[i].NumberOfAverages = options.NumberOfAverages;
+                spectralRegionPodsB[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
+                spectralRegionPodsB[i].NumberOfAverages = options.NumberOfAverages;
             }
 
             // logic to minimize measurements if spectral regions are outside desired wavelength range
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                var pod = spectralRegionPods1[i];
+                var pod = spectralRegionPodsA[i];
                 pod.ShouldMeasure = true;
                 if (_lowerWavelength > pod.CutoffHigh + pod.Bandwidth)
                 {
@@ -112,9 +112,9 @@ namespace MmPhotometer
                     pod.ShouldMeasure = false;
                 }
             }
-            for (int i = 0; i < spectralRegionPods2.Length; i++)
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
-                var pod = spectralRegionPods2[i];
+                var pod = spectralRegionPodsB[i];
                 pod.ShouldMeasure = true;
                 if (_lowerWavelength > pod.CutoffHigh + pod.Bandwidth)
                 {
@@ -126,13 +126,13 @@ namespace MmPhotometer
                 }
             }
 
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                eventLogger.LogEvent($"Spectral region pod(AB..) {i + 1}: {spectralRegionPods1[i]}");
+                eventLogger.LogEvent($"Spectral region pod(AB..) {i + 1}: {spectralRegionPodsA[i]}");
             }
-            for (int i = 0; i < spectralRegionPods2.Length; i++)
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
-                eventLogger.LogEvent($"Spectral region pod(..BA) {i + 1}: {spectralRegionPods2[i]}");
+                eventLogger.LogEvent($"Spectral region pod(..BA) {i + 1}: {spectralRegionPodsB[i]}");
             }
             #endregion
 
@@ -145,16 +145,16 @@ namespace MmPhotometer
                 "=================================================================\n");
 
             eventLogger.LogEvent("Determining optimal exposure time ...");
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPods1[i]);
-                spectralRegionPods2[i].SetIntegrationTime(spectralRegionPods1[i].IntegrationTime);
+                ObtainOptimalExposureTimeAndReferenceSpectrum(spectralRegionPodsA[i]);
+                spectralRegionPodsB[i].SetIntegrationTime(spectralRegionPodsA[i].IntegrationTime);
             }
 
             eventLogger.LogEvent($"Measuring dark spectra ...");
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                ObtainDarkSpectrum(spectralRegionPods1[i]);
+                ObtainDarkSpectrum(spectralRegionPodsA[i]);
             }
             #endregion
 
@@ -166,9 +166,9 @@ namespace MmPhotometer
                     $"Insert sample #{sampleIndex + 1} ({sampleInfo.GetSampleName(sampleIndex)}).\n" +
                     $"Afterwards press any key to continue with measurements.\n" +
                     $"===========================================================================\n");
-                for (int i = 0; i < spectralRegionPods1.Length; i++)
+                for (int i = 0; i < spectralRegionPodsA.Length; i++)
                 {
-                    ObtainSampleSpectrum(sampleIndex, spectralRegionPods1[i]);
+                    ObtainSampleSpectrum(sampleIndex, spectralRegionPodsA[i]);
                 }
             }
             #endregion
@@ -182,9 +182,9 @@ namespace MmPhotometer
                     "Block beam path of photometer. (0 %)\n" +
                     "Afterwards press any key to continue with control measurements.\n" +
                     "===========================================================================\n");
-                for (int i = 0; i < spectralRegionPods1.Length; i++)
+                for (int i = 0; i < spectralRegionPodsA.Length; i++)
                 {
-                    ObtainSampleSpectrum(numSamples, spectralRegionPods1[i]);
+                    ObtainSampleSpectrum(numSamples, spectralRegionPodsA[i]);
                 }
 
                 UIHelper.WriteMessageAndWait(
@@ -192,9 +192,9 @@ namespace MmPhotometer
                     "Remove any samples from photometer. (100 %)\n" +
                     "Afterwards press any key to continue with control measurements.\n" +
                     "===========================================================================\n");
-                for (int i = 0; i < spectralRegionPods1.Length; i++)
+                for (int i = 0; i < spectralRegionPodsA.Length; i++)
                 {
-                    ObtainSampleSpectrum(numSamples + 1, spectralRegionPods1[i]);
+                    ObtainSampleSpectrum(numSamples + 1, spectralRegionPodsA[i]);
                 }
             }
             #endregion
@@ -209,9 +209,9 @@ namespace MmPhotometer
                         $"Insert sample #{sampleIndex + 1} ({sampleInfo.GetSampleName(sampleIndex)}).\n" +
                         $"Afterwards press any key to continue with measurements.\n" +
                         $"===========================================================================\n");
-                    for (int i = 0; i < spectralRegionPods1.Length; i++)
+                    for (int i = 0; i < spectralRegionPodsA.Length; i++)
                     {
-                        ObtainSampleSpectrum(sampleIndex, spectralRegionPods2[i]);
+                        ObtainSampleSpectrum(sampleIndex, spectralRegionPodsB[i]);
                     }
                 }
             }
@@ -224,14 +224,14 @@ namespace MmPhotometer
                     "Afterwards press any key to continue.\n" +
                     "===========================================================================\n");
             eventLogger.LogEvent($"Measuring dark spectra ...");
-            for (int i = 0; i < spectralRegionPods2.Length; i++)
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
-                ObtainDarkSpectrum(spectralRegionPods2[i]);
+                ObtainDarkSpectrum(spectralRegionPodsB[i]);
             }
             eventLogger.LogEvent($"Measuring reference spectra ...");
-            for (int i = 0; i < spectralRegionPods2.Length; i++)
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
-                ObtainReferenceSpectrum(spectralRegionPods2[i]);
+                ObtainReferenceSpectrum(spectralRegionPodsB[i]);
             }
             #endregion
 
@@ -240,13 +240,29 @@ namespace MmPhotometer
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
-                var multiPassSpec = CombineSpectralRegionTransmissions(sampleIndex);
+                var multiPassSpec = CombineSpectralRegionTransmissionsA(sampleIndex);
                 if (multiPassSpec != null)
                 {
                     multiPassSpec.DeleteMetaDataRecords();
                     multiPassSpec.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
+                    multiPassSpec.AddMetaDataRecord("MeasurementPass", "A");
                     sampleTransmissions.Add(multiPassSpec);
-                    multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                    multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                }
+            }
+            if(options.Abba)
+            {
+                for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
+                {
+                    var multiPassSpec = CombineSpectralRegionTransmissionsB(sampleIndex);
+                    if (multiPassSpec != null)
+                    {
+                        multiPassSpec.DeleteMetaDataRecords();
+                        multiPassSpec.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
+                        multiPassSpec.AddMetaDataRecord("MeasurementPass", "B");
+                        sampleTransmissions.Add(multiPassSpec);
+                        multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_B_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                    }
                 }
             }
 
@@ -257,7 +273,7 @@ namespace MmPhotometer
                 int blockedIndex = numSamples;
                 int openIndex = numSamples + 1;
 
-                var controlBlocked = CombineSpectralRegionTransmissions(blockedIndex);
+                var controlBlocked = CombineSpectralRegionTransmissionsA(blockedIndex);
                 if (controlBlocked != null)
                 {
                     controlBlocked.DeleteMetaDataRecords();
@@ -266,7 +282,7 @@ namespace MmPhotometer
                     controlBlocked.SaveAsResultFile(Path.Combine(dataFolderName, $"SampleControl_Blocked.csv"));
                 }
 
-                var controlOpen = CombineSpectralRegionTransmissions(openIndex);
+                var controlOpen = CombineSpectralRegionTransmissionsA(openIndex);
                 if (controlOpen != null)
                 {
                     controlOpen.DeleteMetaDataRecords();
@@ -320,14 +336,35 @@ namespace MmPhotometer
 
         //========================================================================================================
 
-        public static OpticalSpectrum CombineSpectralRegionTransmissions(int sampleIndex)
+        public static OpticalSpectrum CombineSpectralRegionTransmissionsA(int sampleIndex)
         {
             List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
-            for (int i = 0; i < spectralRegionPods1.Length; i++)
+            for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                if (spectralRegionPods1[i].ShouldMeasure)
+                if (spectralRegionPodsA[i].ShouldMeasure)
                 {
-                    regionSpectra.Add(spectralRegionPods1[i].GetMaskedTransmissionSpectrum(sampleIndex));
+                    regionSpectra.Add(spectralRegionPodsA[i].GetMaskedTransmissionSpectrum(sampleIndex));
+                }
+            }
+            if (regionSpectra.Count != 0)
+            {
+                var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
+                var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(_lowerWavelength, _upperWavelength, _wavelengthStep);
+                return resampledRegionSpectrum;
+            }
+            return null;
+        }
+
+        //========================================================================================================
+
+        public static OpticalSpectrum CombineSpectralRegionTransmissionsB(int sampleIndex)
+        {
+            List<IOpticalSpectrum> regionSpectra = new List<IOpticalSpectrum>();
+            for (int i = 0; i < spectralRegionPodsB.Length; i++)
+            {
+                if (spectralRegionPodsB[i].ShouldMeasure)
+                {
+                    regionSpectra.Add(spectralRegionPodsB[i].GetMaskedTransmissionSpectrum(sampleIndex));
                 }
             }
             if (regionSpectra.Count != 0)
