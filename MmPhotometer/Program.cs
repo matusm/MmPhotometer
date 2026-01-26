@@ -91,11 +91,13 @@ namespace MmPhotometer
             {
                 spectralRegionPodsA[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
                 spectralRegionPodsA[i].NumberOfAverages = options.NumberOfAverages;
+                spectralRegionPodsA[i].Name = $"A";
             }
             for (int i = 0; i < spectralRegionPodsB.Length; i++)
             {
                 spectralRegionPodsB[i].SetIntegrationTime(spectro.MinimumIntegrationTime);
                 spectralRegionPodsB[i].NumberOfAverages = options.NumberOfAverages;
+                spectralRegionPodsB[i].Name = $"B";
             }
 
             // logic to minimize measurements if spectral regions are outside desired wavelength range
@@ -218,20 +220,23 @@ namespace MmPhotometer
             #endregion
 
             #region Take reference and dark spectra ..BA
-            UIHelper.WriteMessageAndWait(
-                    "\n===========================================================================\n" +
-                    "Remove any samples from photometer.\n" +
-                    "Afterwards press any key to continue.\n" +
-                    "===========================================================================\n");
-            eventLogger.LogEvent($"Measuring dark spectra ...");
-            for (int i = 0; i < spectralRegionPodsB.Length; i++)
+            if (options.Abba)
             {
-                ObtainDarkSpectrum(spectralRegionPodsB[i]);
-            }
-            eventLogger.LogEvent($"Measuring reference spectra ...");
-            for (int i = 0; i < spectralRegionPodsB.Length; i++)
-            {
-                ObtainReferenceSpectrum(spectralRegionPodsB[i]);
+                UIHelper.WriteMessageAndWait(
+                        "\n===========================================================================\n" +
+                        "Remove any samples from photometer.\n" +
+                        "Afterwards press any key to continue.\n" +
+                        "===========================================================================\n");
+                eventLogger.LogEvent($"Measuring dark spectra ...");
+                for (int i = 0; i < spectralRegionPodsB.Length; i++)
+                {
+                    ObtainDarkSpectrum(spectralRegionPodsB[i]);
+                }
+                eventLogger.LogEvent($"Measuring reference spectra ...");
+                for (int i = 0; i < spectralRegionPodsB.Length; i++)
+                {
+                    ObtainReferenceSpectrum(spectralRegionPodsB[i]);
+                }
             }
             #endregion
 

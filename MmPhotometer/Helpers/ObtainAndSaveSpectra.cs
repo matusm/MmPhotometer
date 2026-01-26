@@ -15,11 +15,7 @@ namespace MmPhotometer
             double intTime = spectro.GetOptimalExposureTime();
             spectralRegionPod.SetIntegrationTime(intTime);
             eventLogger.LogEvent($"Optimal integration time - {spectralRegionPod.FilterPosition.ToFriendlyString()}: {intTime} s.");
-            spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
-            var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"reference spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
-            spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
-            refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv"));
-            temperature.Update(); // every now and then update temperature reading
+            ObtainReferenceSpectrum(spectralRegionPod);
         }
 
         internal static void ObtainDarkSpectrum(SpectralRegionPod spectralRegionPod)
@@ -30,7 +26,7 @@ namespace MmPhotometer
             shutter.Close();
             var darkSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"dark spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetDarkSpectrum(darkSpectrum);
-            darkSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}.csv"));
+            darkSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"1_RawBackground{spectralRegionPod.FilterPosition}_{spectralRegionPod.Name}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
 
@@ -42,7 +38,7 @@ namespace MmPhotometer
             shutter.Open();
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"reference spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
-            refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}.csv"));
+            refSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"0_RawReference{spectralRegionPod.FilterPosition}_{spectralRegionPod.Name}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
 
@@ -56,7 +52,7 @@ namespace MmPhotometer
             shutter.Open();
             var sampleSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, "sample spectrum");
             spectralRegionPod.SetRawSampleSpectrum(sampleNumber, sampleSpectrum);
-            sampleSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"2_RawSample{spectralRegionPod.FilterPosition}.csv"));
+            sampleSpectrum.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"2_RawSample{spectralRegionPod.FilterPosition}_{spectralRegionPod.Name}.csv"));
             temperature.Update(); // every now and then update temperature reading
         }
     }
