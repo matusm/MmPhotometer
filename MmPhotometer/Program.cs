@@ -176,6 +176,7 @@ namespace MmPhotometer
             #endregion
 
             #region Make control measurements with blocked and open port
+            // TODO: handle ABBA
             if (options.ControlMeasurements)
             {
                 temperature.Update(); // every now and then update temperature reading
@@ -246,18 +247,18 @@ namespace MmPhotometer
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
                 var specA = CombineSpectralRegionTransmissionsA(sampleIndex);
-                specA.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                specA.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"3_Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
                 samplesA[sampleIndex] = specA;
                 if (options.Abba)
                 {
                     var specB = CombineSpectralRegionTransmissionsB(sampleIndex);
-                    specB.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"Sample{sampleIndex + 1}_B_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                    specB.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"3_Sample{sampleIndex + 1}_B_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
                     samplesB[sampleIndex] = specB;
                 }
             }
 
-            // get final data
-            List<OpticalSpectrum> sampleTransmissions = new List<OpticalSpectrum>();
+            // get final results and save them
+            List<OpticalSpectrum> resultCollectionForPlot = new List<OpticalSpectrum>();
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
                 OpticalSpectrum result = samplesA[sampleIndex];
@@ -270,7 +271,7 @@ namespace MmPhotometer
                     result.AddMetaDataRecord("MeasurementPass", "ABBA");
                 }
                 result.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
-                sampleTransmissions.Add(result);
+                resultCollectionForPlot.Add(result);
             }
 
             // TODO: handle ABBA
@@ -320,7 +321,7 @@ namespace MmPhotometer
             eventLogger.Close();
 
             //Plot the sample transmission spectra
-            Plotter plotter = new Plotter(sampleTransmissions.ToArray(), _lowerWavelength, _upperWavelength, 0, 100);
+            Plotter plotter = new Plotter(resultCollectionForPlot.ToArray(), _lowerWavelength, _upperWavelength, 0, 100);
             string filePath = Path.Combine(dataFolderName, "SampleTransmissionChart.png");
             plotter.SaveTransmissionChart("Sample Transmission", filePath);
             plotter.ShowTransmissionChart("Sample Transmission");
