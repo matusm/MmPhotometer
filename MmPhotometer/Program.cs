@@ -240,37 +240,40 @@ namespace MmPhotometer
             }
             #endregion
 
-
-            List<OpticalSpectrum> sampleTransmissions = new List<OpticalSpectrum>();
+            OpticalSpectrum[] samplesA = new OpticalSpectrum[numSamples];
+            OpticalSpectrum[] samplesB = new OpticalSpectrum[numSamples];
 
             for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
             {
-                var multiPassSpec = CombineSpectralRegionTransmissionsA(sampleIndex);
-                if (multiPassSpec != null)
+                var specA = CombineSpectralRegionTransmissionsA(sampleIndex);
+                specA.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                samplesA[sampleIndex] = specA;
+                if (options.Abba)
                 {
-                    multiPassSpec.DeleteMetaDataRecords();
-                    multiPassSpec.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
-                    multiPassSpec.AddMetaDataRecord("MeasurementPass", "A");
-                    sampleTransmissions.Add(multiPassSpec);
-                    multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
-                }
-            }
-            if(options.Abba)
-            {
-                for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
-                {
-                    var multiPassSpec = CombineSpectralRegionTransmissionsB(sampleIndex);
-                    if (multiPassSpec != null)
-                    {
-                        multiPassSpec.DeleteMetaDataRecords();
-                        multiPassSpec.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
-                        multiPassSpec.AddMetaDataRecord("MeasurementPass", "B");
-                        sampleTransmissions.Add(multiPassSpec);
-                        multiPassSpec.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_B_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
-                    }
+                    var specB = CombineSpectralRegionTransmissionsB(sampleIndex);
+                    specB.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"Sample{sampleIndex + 1}_B_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                    samplesB[sampleIndex] = specB;
                 }
             }
 
+            // get final data
+            List<OpticalSpectrum> sampleTransmissions = new List<OpticalSpectrum>();
+            for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
+            {
+                OpticalSpectrum result = samplesA[sampleIndex];
+                result.DeleteMetaDataRecords();
+                result.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
+                result.AddMetaDataRecord("MeasurementPass", "singlePass");
+                if (options.Abba)
+                {
+                    result = SpecMath.Average(samplesA[sampleIndex], samplesA[sampleIndex]);
+                    result.AddMetaDataRecord("MeasurementPass", "ABBA");
+                }
+                result.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                sampleTransmissions.Add(result);
+            }
+
+            // TODO: handle ABBA
             if (options.ControlMeasurements)
             {
                 // process control measurements
