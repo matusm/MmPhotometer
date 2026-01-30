@@ -74,6 +74,8 @@ namespace MmPhotometer
             sampleInfo = new SampleInfo(options.InputPath);
             int numSamples = sampleInfo.NumberOfSamples;
             int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
+            int blockedIndex = numSamples;
+            int openIndex = numSamples + 1;
 
             dataFolderName = eventLogger.LogDirectory;
             rawDataFolderName = Path.Combine(dataFolderName, "RawSpectra");
@@ -130,11 +132,7 @@ namespace MmPhotometer
 
             for (int i = 0; i < spectralRegionPodsA.Length; i++)
             {
-                eventLogger.LogEvent($"Spectral region pod(AB..) {i + 1}: {spectralRegionPodsA[i]}");
-            }
-            for (int i = 0; i < spectralRegionPodsB.Length; i++)
-            {
-                eventLogger.LogEvent($"Spectral region pod(..BA) {i + 1}: {spectralRegionPodsB[i]}");
+                eventLogger.LogEvent($"Spectral region pod {i + 1}: {spectralRegionPodsA[i]}");
             }
             #endregion
 
@@ -209,7 +207,7 @@ namespace MmPhotometer
                         "===========================================================================\n");
                     for (int i = 0; i < spectralRegionPodsB.Length; i++)
                     {
-                        ObtainSampleSpectrum(numSamples + 1, spectralRegionPodsA[i]);
+                        ObtainSampleSpectrum(numSamples + 1, spectralRegionPodsB[i]);
                     }
                     UIHelper.WriteMessageAndWait(
                         "\n===========================================================================\n" +
@@ -218,7 +216,7 @@ namespace MmPhotometer
                         "===========================================================================\n");
                     for (int i = 0; i < spectralRegionPodsB.Length; i++)
                     {
-                        ObtainSampleSpectrum(numSamples, spectralRegionPodsA[i]);
+                        ObtainSampleSpectrum(numSamples, spectralRegionPodsB[i]);
                     }
                 }
             }
@@ -281,7 +279,8 @@ namespace MmPhotometer
 
             // get final results and save them
             List<OpticalSpectrum> resultCollectionForPlot = new List<OpticalSpectrum>();
-            for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
+            List<OpticalSpectrum> controlCollectionForPlot = new List<OpticalSpectrum>();
+            for (int sampleIndex = 0; sampleIndex < numSamplesWithControls; sampleIndex++)
             {
                 OpticalSpectrum result = samplesA[sampleIndex];
                 result.DeleteMetaDataRecords();
@@ -290,52 +289,50 @@ namespace MmPhotometer
                 if (options.Abba)
                 {
                     result = SpecMath.Average(samplesA[sampleIndex], samplesA[sampleIndex]);
+                    result.DeleteMetaDataRecords();
+                    result.AddMetaDataRecord(SampleMetaDataRecords(sampleIndex));
                     result.AddMetaDataRecord("MeasurementPass", "ABBA");
                 }
-                result.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
-                resultCollectionForPlot.Add(result);
-            }
-
-            // TODO: handle ABBA
-            if (options.ControlMeasurements)
-            {
-                // process control measurements
-                List<OpticalSpectrum> controlTransmissions = new List<OpticalSpectrum>();
-                int blockedIndex = numSamples;
-                int openIndex = numSamples + 1;
-
-                var controlBlocked = CombineSpectralRegionTransmissionsA(blockedIndex);
-                if (controlBlocked != null)
-                {
-                    controlBlocked.DeleteMetaDataRecords();
-                    controlBlocked.AddMetaDataRecord(SampleMetaDataRecords("Blocked", "Control sample with 0 % transmission"));
-                    controlTransmissions.Add(controlBlocked);
-                    controlBlocked.SaveAsResultFile(Path.Combine(dataFolderName, $"SampleControl_Blocked.csv"));
+                if(sampleIndex >= numSamples)
+                { 
+                    string design = string.Empty;
+                    if (sampleIndex == blockedIndex)
+                    {
+                        design = "blocked";
+                        result.AddMetaDataRecord(SampleMetaDataRecords("Blocked", "Control sample with 0 % transmission"));
+                    }
+                    if (sampleIndex == openIndex) 
+                    {
+                        design = "blank";
+                        result.AddMetaDataRecord(SampleMetaDataRecords("Open", "Control sample with 100 % transmission"));
+                    }
+                    result.SaveAsResultFile(Path.Combine(dataFolderName, $"Control_{design}.csv"));
+                    controlCollectionForPlot.Add(result);
                 }
-
-                var controlOpen = CombineSpectralRegionTransmissionsA(openIndex);
-                if (controlOpen != null)
+                if (sampleIndex < numSamples)
                 {
-                    controlOpen.DeleteMetaDataRecords();
-                    controlOpen.AddMetaDataRecord(SampleMetaDataRecords("Open", "Control sample with 100 % transmission"));
-                    controlTransmissions.Add(controlOpen);
-                    controlOpen.SaveAsResultFile(Path.Combine(dataFolderName, $"SampleControl_Open.csv"));
+                    result.SaveAsResultFile(Path.Combine(dataFolderName, $"Sample{sampleIndex + 1}_{sampleInfo.GetSampleName(sampleIndex)}.csv"));
+                    resultCollectionForPlot.Add(result);
                 }
-
-                Plotter controlPlotterBlocked = new Plotter(controlTransmissions.ToArray(), _lowerWavelength, _upperWavelength, -2.0, 2.0, 0.5);
-                controlPlotterBlocked.SaveTransmissionChart("Control Measurement - Blocked Port", Path.Combine(dataFolderName, "ControlBlockedChart.png"));
-                Plotter controlPlotterOpen = new Plotter(controlTransmissions.ToArray(), _lowerWavelength, _upperWavelength, 98.0, 102.0, 0.5);
-                controlPlotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlOpenChart.png"));
             }
 
             Console.WriteLine();
             //temperature.Update(); // the very last update !!! DOES NOT RETURN !!!
+            // TODO ad to result metadata
             if (temperature.HasTemperatureData())
             {
                 eventLogger.LogEvent($"Instrument temperature statistics:\n" +
                     $"   First value: {temperature.GetFirstTemperature():F2} °C.\n" +
                     $"   Average:     {temperature.GetTemperatureAverage():F2} °C.\n" +
                     $"   Final value: {temperature.GetLatestTemperature():F2} °C.");
+            }
+
+            if (options.ControlMeasurements)
+            {
+                Plotter controlPlotterBlocked = new Plotter(controlCollectionForPlot.ToArray(), _lowerWavelength, _upperWavelength, -2.0, 2.0, 0.5);
+                controlPlotterBlocked.SaveTransmissionChart("Control Measurement - Blocked Port", Path.Combine(dataFolderName, "ControlBlockedChart.png"));
+                Plotter controlPlotterOpen = new Plotter(controlCollectionForPlot.ToArray(), _lowerWavelength, _upperWavelength, 98.0, 102.0, 0.5);
+                controlPlotterOpen.SaveTransmissionChart("Control Measurement - Open Port", Path.Combine(dataFolderName, "ControlBlankChart.png"));
             }
 
             Console.WriteLine();

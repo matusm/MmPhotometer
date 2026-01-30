@@ -14,7 +14,9 @@ namespace MmPhotometer
             metaData.Add("MeasurementMode", $"{_options.Mode.ToFriendlyString()}");
             metaData.Add("UserComment", $"{_options.UserComment}");
             metaData.Add("Application", $"{GetAppNameAndVersion()}");
-            metaData.Add("DateTime", $"{DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}");
+            metaData.Add("DateTime", $"{DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}");
+            if(temperature.HasTemperatureData())
+                metaData.Add("InstrumentTemperature", $"[{temperature.GetFirstTemperature():F2} ; {temperature.GetTemperatureAverage():F2} ; {temperature.GetLatestTemperature():F2}] °C");
             metaData.Add("SpectrometerManufacturer", $"{spectro.InstrumentManufacturer}");
             metaData.Add("SpectrometerType", $"{spectro.InstrumentType}");
             metaData.Add("SpectrometerSerialNumber", $"{spectro.InstrumentSerialNumber}");

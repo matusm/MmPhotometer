@@ -35,6 +35,7 @@ namespace MmPhotometer
             temperature.Update(); // every now and then update temperature reading
             if (spectralRegionPod.ShouldMeasure == false) return;
             spectro.SetIntegrationTime(spectralRegionPod.IntegrationTime);
+            filterWheel.GoToPosition(spectralRegionPod.FilterPositionAsInt);
             shutter.Open();
             var refSpectrum = OnCallMeasureSpectrum(spectralRegionPod.NumberOfAverages, $"reference spectrum - {spectralRegionPod.FilterPosition.ToFriendlyString()}");
             spectralRegionPod.SetRawReferenceSpectrum(refSpectrum);
