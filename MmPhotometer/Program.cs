@@ -188,7 +188,6 @@ namespace MmPhotometer
                 {
                     ObtainSampleSpectrum(numSamples, spectralRegionPodsA[i]);
                 }
-
                 UIHelper.WriteMessageAndWait(
                     "\n===========================================================================\n" +
                     "Remove any samples from photometer. (100 %)\n" +
@@ -197,6 +196,29 @@ namespace MmPhotometer
                 for (int i = 0; i < spectralRegionPodsA.Length; i++)
                 {
                     ObtainSampleSpectrum(numSamples + 1, spectralRegionPodsA[i]);
+                }
+
+                if(options.Abba)
+                {
+                    temperature.Update();
+                    UIHelper.WriteMessageAndWait(
+                        "\n===========================================================================\n" +
+                        "Remove any samples from photometer. (100 %)\n" +
+                        "Afterwards press any key to continue with control measurements.\n" +
+                        "===========================================================================\n");
+                    for (int i = 0; i < spectralRegionPodsB.Length; i++)
+                    {
+                        ObtainSampleSpectrum(numSamples + 1, spectralRegionPodsA[i]);
+                    }
+                    UIHelper.WriteMessageAndWait(
+                        "\n===========================================================================\n" +
+                        "Block beam path of photometer. (0 %)\n" +
+                        "Afterwards press any key to continue with control measurements.\n" +
+                        "===========================================================================\n");
+                    for (int i = 0; i < spectralRegionPodsB.Length; i++)
+                    {
+                        ObtainSampleSpectrum(numSamples, spectralRegionPodsA[i]);
+                    }
                 }
             }
             #endregion
@@ -240,10 +262,10 @@ namespace MmPhotometer
             }
             #endregion
 
-            OpticalSpectrum[] samplesA = new OpticalSpectrum[numSamples];
-            OpticalSpectrum[] samplesB = new OpticalSpectrum[numSamples];
+            OpticalSpectrum[] samplesA = new OpticalSpectrum[numSamplesWithControls];
+            OpticalSpectrum[] samplesB = new OpticalSpectrum[numSamplesWithControls];
 
-            for (int sampleIndex = 0; sampleIndex < numSamples; sampleIndex++)
+            for (int sampleIndex = 0; sampleIndex < numSamplesWithControls; sampleIndex++)
             {
                 var specA = CombineSpectralRegionTransmissionsA(sampleIndex);
                 specA.SaveAsSimpleCsvFile(Path.Combine(rawDataFolderName, $"Sample{sampleIndex + 1}_A_{sampleInfo.GetSampleName(sampleIndex)}.csv"));

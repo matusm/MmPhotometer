@@ -18,19 +18,19 @@ namespace MmPhotometer
 
         public string GetSampleName(int index)
         {
-            if (index < 0 || index >= _samples.Length)
-            {
+            if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index), "Index for sample names is out of range.");
-            }
+            if (index >= _samples.Length)
+                return string.Empty;
             return _samples[index].Name;
         }
 
         public string GetSampleDescription(int index)
         {
-            if (index < 0 || index >= _samples.Length)
-            {
+            if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index), "Index for sample descriptions is out of range.");
-            }
+            if (index >= _samples.Length)
+                return string.Empty;
             return _samples[index].Description;
         }
 
