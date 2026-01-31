@@ -37,7 +37,7 @@ namespace MmPhotometer
 
         private static void Run(Options options)
         {
-            _options = options;
+            _options = options; // to make options available outside of Run()
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
             //filterWheel = new NullFilterWheel();
             filterWheel = new ManualFilterWheel();
@@ -63,10 +63,7 @@ namespace MmPhotometer
                     break;
             }
 
-            _lowerWavelength = options.LowerBound;
-            _upperWavelength = options.UpperBound;
-            _wavelengthStep = options.StepSize;
-            ClampWavelengthRange();
+            SetWavelengthRange();
 
             temperature.Update(); // every now and then update temperature reading
 
@@ -346,6 +343,16 @@ namespace MmPhotometer
             plotter.ShowTransmissionChart("Sample Transmission");
 
             Console.WriteLine("done.");
+        }
+
+        //========================================================================================================
+
+        private static void SetWavelengthRange()
+        {
+            _lowerWavelength = _options.LowerBound;
+            _upperWavelength = _options.UpperBound;
+            _wavelengthStep = _options.StepSize;
+            ClampWavelengthRange();
         }
 
         //========================================================================================================
