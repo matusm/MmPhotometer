@@ -35,12 +35,14 @@ namespace MmPhotometer
         private static Options _options; // for use outside of Run()
         #endregion
 
+        //========================================================================================================
+
         private static void Run(Options options)
         {
             _options = options; // to make options available outside of Run()
             eventLogger = new EventLogger(options.BasePath, options.LogFileName);
-            //filterWheel = new NullFilterWheel();
             filterWheel = new ManualFilterWheel();
+            //filterWheel = new NullFilterWheel();
             //filterWheel = new MotorFilterWheel(options.FwPort);
             switch (options.SpecType)
             {
@@ -67,12 +69,12 @@ namespace MmPhotometer
 
             temperature.Update(); // every now and then update temperature reading
 
-            // get sample names from input file
+            // get sample description from input file
             sampleInfo = new SampleInfo(options.InputPath);
             int numSamples = sampleInfo.NumberOfSamples;
             int numSamplesWithControls = options.ControlMeasurements ? numSamples + 2 : numSamples;
-            int blockedIndex = numSamples;
-            int openIndex = numSamples + 1;
+            int indexForControlBlocked = numSamples;
+            int indexForControlBlank = numSamples + 1;
 
             dataFolderName = eventLogger.LogDirectory;
             rawDataFolderName = Path.Combine(dataFolderName, "RawSpectra");
@@ -82,7 +84,7 @@ namespace MmPhotometer
             eventLogger.LogEvent($"Measurement mode: {options.Mode.ToFriendlyString()}");
             LogSetupInfo();
 
-            #region Setup spectral region pods as an array
+            #region Setup spectral region pods as arrays
 
             spectralRegionPodsA = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for AB.. of ABBA
             spectralRegionPodsB = SetupPods(options.Mode, numSamplesWithControls, options.MaxIntTime); // for ..BA of ABBA
@@ -293,12 +295,12 @@ namespace MmPhotometer
                 if(sampleIndex >= numSamples)
                 { 
                     string design = string.Empty;
-                    if (sampleIndex == blockedIndex)
+                    if (sampleIndex == indexForControlBlocked)
                     {
                         design = "blocked";
                         result.AddMetaDataRecord(SampleMetaDataRecords("Blocked", "Control sample with 0 % transmission"));
                     }
-                    if (sampleIndex == openIndex) 
+                    if (sampleIndex == indexForControlBlank) 
                     {
                         design = "blank";
                         result.AddMetaDataRecord(SampleMetaDataRecords("Open", "Control sample with 100 % transmission"));
@@ -315,7 +317,6 @@ namespace MmPhotometer
 
             Console.WriteLine();
             //temperature.Update(); // the very last update !!! DOES NOT RETURN !!!
-            // TODO ad to result metadata
             if (temperature.HasTemperatureData())
             {
                 eventLogger.LogEvent($"Instrument temperature statistics:\n" +
@@ -412,6 +413,5 @@ namespace MmPhotometer
         }
 
         //========================================================================================================
-
     }
 }
