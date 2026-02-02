@@ -33,6 +33,8 @@ namespace MmPhotometer
         private static double _upperWavelength;
         private static double _wavelengthStep;
         private static Options _options; // for use outside of Run()
+
+        private static double[] _targetWavelengthsForCertification = { 440, 465, 546.1, 590, 635 };
         #endregion
 
         //========================================================================================================
@@ -319,10 +321,10 @@ namespace MmPhotometer
             //temperature.Update(); // the very last update !!! DOES NOT RETURN !!!
             if (temperature.HasTemperatureData())
             {
-                eventLogger.LogEvent($"Instrument temperature statistics:\n" +
-                    $"   First value: {temperature.GetFirstTemperature():F2} °C.\n" +
-                    $"   Average:     {temperature.GetTemperatureAverage():F2} °C.\n" +
-                    $"   Final value: {temperature.GetLatestTemperature():F2} °C.");
+                eventLogger.LogEvent($"Instrument temperature statistics: " +
+                    $"[first average last] {temperature.GetFirstTemperature():F2} " +
+                    $"{temperature.GetTemperatureAverage():F2} " +
+                    $"{temperature.GetLatestTemperature():F2} °C, [range] {temperature.GetTemperatureRange():F2} °C");
             }
 
             if (options.ControlMeasurements)
@@ -386,6 +388,7 @@ namespace MmPhotometer
             {
                 var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
                 var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(_lowerWavelength, _upperWavelength, _wavelengthStep);
+                //var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(_targetWavelengthsForCertification);
                 return resampledRegionSpectrum;
             }
             return null;
@@ -407,6 +410,7 @@ namespace MmPhotometer
             {
                 var combinedRegionSpectrum = SpecMath.Add(regionSpectra.ToArray());
                 var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(_lowerWavelength, _upperWavelength, _wavelengthStep);
+                //var resampledRegionSpectrum = combinedRegionSpectrum.ResampleSpectrum(_targetWavelengthsForCertification);
                 return resampledRegionSpectrum;
             }
             return null;

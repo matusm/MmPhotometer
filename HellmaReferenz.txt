@@ -1,7 +1,6 @@
 
-#F2 ; 7400 666-F2 Hellma, D=0.25
-#F3 ; 7400 666-F3 Hellma, D=0.5
-#F4 ; 7400 666-F4 Hellma, D=1.0
-F390A ; 0017 66-F390 Hellma, D=0.04
-F390R ; 0017 66-F390 Hellma, D=0.04
+F2 ; 7400 666-F2 Hellma, D=0.25
+F3 ; 7400 666-F3 Hellma, D=0.5
+F4 ; 7400 666-F4 Hellma, D=1.0
+F390 ; 0017 66-F390 Hellma, D=0.04
 #F301 ; 0017 66-F301 Hellma, D=2.5
